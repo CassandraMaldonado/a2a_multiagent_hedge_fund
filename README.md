@@ -19,7 +19,7 @@ This system is designed as a modular, real-time investment strategy engine. It l
 
 ---
 
-## ⚙️ Features
+## Features
 
 - ✅ Structured A2A-style message passing between agents
 - ✅ Dynamic task delegation and agent coordination via LangGraph
@@ -30,7 +30,7 @@ This system is designed as a modular, real-time investment strategy engine. It l
 
 ---
 
-## 🏁 Quickstart (Google Colab)
+## Quickstart (Google Colab)
 
 1. Clone or upload your agent files into Colab
 2. Run environment setup:
