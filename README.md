@@ -21,8 +21,8 @@ This system is designed as a modular, real-time investment strategy engine. It l
 
 ## Features
 
-- ✅ Structured A2A-style message passing between agents
-- ✅ Dynamic task delegation and agent coordination via LangGraph
+- Structured A2A-style message passing between agents
+- Dynamic task delegation and agent coordination via LangGraph
 - ✅ Forecasting via ensemble of ARIMA, Prophet, LSTM
 - ✅ Sentiment analysis from Reddit, Twitter/X, News (via Hugging Face models)
 - ✅ Macroeconomic regime detection (expansion, contraction, inflation shock, etc.)
