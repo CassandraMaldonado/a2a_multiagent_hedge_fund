@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import os
 
 # Try to import optional libs used in the notebook
 try:
@@ -17,14 +18,14 @@ try:
 except Exception as e:
     st.warning("mlxtend is required for Apriori analysis. Install with: pip install mlxtend")
 
-st.set_page_config(page_title="Bundles/Aurora – Market Basket Dashboard", layout="wide")
+st.set_page_config(page_title="Bundles/Aurora – Panel de Canastas de Mercado", layout="wide")
 
-st.title("🧺 Bundles / Market Basket Dashboard")
-st.caption("Interactive app generated from your notebook. Upload a transactions CSV and explore frequent itemsets & association rules.")
+st.title("🧺 Bundles / Panel de Canastas de Mercado")
+st.caption("Aplicación interactiva generada desde tu notebook. Sube un CSV de transacciones y explora itemsets frecuentes y reglas de asociación.")
 
-st.sidebar.header("Upload & Settings")
-uploaded = st.sidebar.file_uploader("Upload transactions CSV", type=["csv"])
-example_schema = st.sidebar.checkbox("Show expected schema / tips", value=False)
+st.sidebar.header("Carga y Configuración")
+uploaded = st.sidebar.file_uploader("Sube un CSV de transacciones", type=["csv"])
+example_schema = st.sidebar.checkbox("Mostrar esquema esperado / consejos", value=False)
 
 if example_schema:
     st.sidebar.markdown(
@@ -38,10 +39,10 @@ if example_schema:
         '''
     )
 
-min_support = st.sidebar.slider("Min support (fraction of orders containing an itemset)", 0.001, 0.2, 0.02, 0.001)
-min_confidence = st.sidebar.slider("Min confidence", 0.1, 1.0, 0.3, 0.05)
-min_lift = st.sidebar.slider("Min lift", 0.5, 10.0, 1.0, 0.1)
-top_n_products = st.sidebar.slider("Top N products by frequency", 5, 100, 20, 5)
+min_support = st.sidebar.slider("Soporte mínimo (fracción de órdenes que contienen un itemset)", 0.001, 0.2, 0.02, 0.001)
+min_confidence = st.sidebar.slider("Confianza mínima", 0.1, 1.0, 0.3, 0.05)
+min_lift = st.sidebar.slider("Elevación (lift) mínima", 0.5, 10.0, 1.0, 0.1)
+top_n_products = st.sidebar.slider("Top N productos por frecuencia", 5, 100, 20, 5)
 
 # ---- Notebook code (functions/utilities) ----
 # Below is the code extracted from the uploaded notebook. 
@@ -50,6 +51,7 @@ top_n_products = st.sidebar.slider("Top N products by frequency", 5, 100, 20, 5)
 # >>> BEGIN NOTEBOOK CODE >>>
 import pandas as pd
 import numpy as np
+import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 from mlxtend.frequent_patterns import apriori, association_rules
@@ -815,7 +817,7 @@ def run_pipeline(df, min_support, min_confidence, min_lift, top_n_products):
     # Try to locate order and product columns
     order_col, variant_col = try_detect_columns(df)
     if order_col is None or variant_col is None:
-        return None, "Could not auto-detect columns. Please rename your order id and product columns."
+        return None, "No se pudieron detectar las columnas. Renombra las columnas de ID de orden y producto."
 
     # Group into baskets (list of items per order)
     grouped = df.groupby(order_col)[variant_col].apply(lambda s: [str(x) for x in s.dropna().tolist()]).tolist()
@@ -834,12 +836,12 @@ def run_pipeline(df, min_support, min_confidence, min_lift, top_n_products):
         from mlxtend.frequent_patterns import apriori, association_rules
         frequent_itemsets = apriori(df_encoded, min_support=min_support, use_colnames=True)
         if frequent_itemsets.empty:
-            return None, "No frequent itemsets at this support. Try lowering min_support."
+            return None, "No hay itemsets frecuentes con este soporte. Prueba bajando el soporte mínimo."
         rules = association_rules(frequent_itemsets, metric='confidence', min_threshold=min_confidence)
         if min_lift is not None:
             rules = rules[rules['lift'] >= min_lift]
     except Exception as e:
-        return None, f"Apriori/rules failed: {e}"
+        return None, f"Falló Apriori/reglas: {e}"
 
     # Product frequency
     prod_freq = pd.Series([p for basket in grouped for p in basket]).value_counts().reset_index()
@@ -861,13 +863,13 @@ if uploaded is not None:
     try:
         df = pd.read_csv(uploaded)
     except Exception as e:
-        st.error(f"Could not read CSV: {e}")
+        st.error(f"No se pudo leer el CSV: {e}")
         df = None
 
     if df is not None:
-        st.subheader("📄 Raw Data (first 200 rows)")
+        st.subheader("📄 Datos crudos (primeras 200 filas)")
         st.dataframe(df.head(200), use_container_width=True)
-        with st.expander("Detected columns", expanded=True):
+        with st.expander("Columnas detectadas", expanded=True):
             oc, vc = try_detect_columns(df)
             st.write({"Order ID": oc, "Product/Variant": vc})
 
@@ -877,29 +879,29 @@ if uploaded is not None:
         if err:
             st.error(err)
         else:
-            st.success("Analysis complete.")
+            st.success("Análisis completo.")
 
             c1, c2, c3 = st.columns(3)
             with c1:
-                st.metric("Baskets", len(df.groupby(outputs['detected_columns'][0])))
+                st.metric("Canastas", len(df.groupby(outputs['detected_columns'][0])))
             with c2:
-                st.metric("Unique products", df[outputs['detected_columns'][1]].nunique())
+                st.metric("Productos únicos", df[outputs['detected_columns'][1]].nunique())
             with c3:
-                st.metric("Encoded shape", f"{outputs['df_encoded_shape'][0]} × {outputs['df_encoded_shape'][1]}")
+                st.metric("Tamaño codificado", f"{outputs['df_encoded_shape'][0]} × {outputs['df_encoded_shape'][1]}")
 
-            st.subheader("🏆 Top Products by Frequency")
+            st.subheader("🏆 Productos más frecuentes")
             st.dataframe(outputs["top_frequency"], use_container_width=True)
 
             if sns is not None and plt is not None:
                 st.pyplot(plt.figure())
                 plt.figure()
                 sns.barplot(data=outputs["top_frequency"], x="count", y="product")
-                plt.title("Top Products by Count")
+                plt.title("Productos más frecuentes por conteo")
                 st.pyplot(plt.gcf())
 
-            st.subheader("📈 Frequent Itemsets")
+            st.subheader("📈 Itemsets frecuentes")
             # --- Top 10 Association Rules ---
-            st.subheader("🔝 Top 10 Association Rules (ranked by Lift, Confidence, Support)")
+            st.subheader("🔝 Top 10 Reglas de asociación (por Lift, Confianza, Soporte)")
             top10_rules = outputs["rules"].copy()
             def _set_to_text(s):
                 try:
@@ -917,7 +919,7 @@ if uploaded is not None:
                 st.info("No rules to display.")
 
             # --- Top 10 Most Frequent Products ---
-            st.subheader("🏅 Top 10 Most Frequent Products")
+            st.subheader("🏅 Top 10 Productos más frecuentes")
             top10_products = outputs["product_frequency"].head(10).copy()
             st.dataframe(top10_products, use_container_width=True)
             if sns is not None and plt is not None and not top10_products.empty:
@@ -927,14 +929,14 @@ if uploaded is not None:
                 st.pyplot(plt.gcf())
 
             # --- Oportunidades (High Lift, Low Support) ---
-            st.subheader("💡 Oportunidades (High Lift • Low Support)")
+            st.subheader("💡 Oportunidades (Lift alto • Soporte bajo)")
             colA, colB, colC = st.columns(3)
             with colA:
-                opp_min_lift = st.number_input("Min Lift (Oportunidades)", min_value=1.0, max_value=50.0, value=2.0, step=0.1)
+                opp_min_lift = st.number_input("Lift mínimo (Oportunidades)", min_value=1.0, max_value=50.0, value=2.0, step=0.1)
             with colB:
-                opp_max_support = st.number_input("Max Support", min_value=0.0, max_value=float(outputs["rules"]["support"].max() if not outputs["rules"].empty else 0.5), value=0.03, step=0.005, format="%.3f")
+                opp_max_support = st.number_input("Soporte máximo", min_value=0.0, max_value=float(outputs["rules"]["support"].max() if not outputs["rules"].empty else 0.5), value=0.03, step=0.005, format="%.3f")
             with colC:
-                opp_topn = st.number_input("Show Top N", min_value=5, max_value=100, value=20, step=5)
+                opp_topn = st.number_input("Mostrar Top N", min_value=5, max_value=100, value=20, step=5)
             oportunidades = outputs["rules"].copy()
             if not oportunidades.empty:
                 oportunidades = oportunidades[(oportunidades["lift"] >= opp_min_lift) & (oportunidades["support"] <= opp_max_support)]\
@@ -947,12 +949,12 @@ if uploaded is not None:
                     )
                     st.dataframe(oportunidades[["rule","support","confidence","lift"]], use_container_width=True)
                 else:
-                    st.info("No opportunities at these thresholds. Try lowering Max Support or Min Lift.")
+                    st.info("No hay oportunidades con estos umbrales. Prueba bajando el soporte máximo o el lift mínimo.")
             else:
                 st.info("No rules calculated to derive opportunities.")
 
             # --- Pares Frecuentes (Top Frequent Pairs) ---
-            st.subheader("👫 Pares Frecuentes (Top 10 itemsets of size 2)")
+            st.subheader("👫 Pares frecuentes (Top 10 itemsets de tamaño 2)")
             fi = outputs["frequent_itemsets"].copy()
             if not fi.empty:
                 pairs = fi[fi["itemsets"].apply(lambda s: len(s)==2)].sort_values("support", ascending=False).head(10).copy()
@@ -960,12 +962,12 @@ if uploaded is not None:
                     pairs["pair"] = pairs["itemsets"].apply(lambda s: " + ".join(sorted(list(s))))
                     st.dataframe(pairs[["pair","support"]], use_container_width=True)
                 else:
-                    st.info("No frequent pairs at current support.")
+                    st.info("No hay pares frecuentes con el soporte actual.")
             else:
                 st.info("No frequent itemsets yet.")
 
             # --- Productos más fuertes (1-item itemsets by support) ---
-            st.subheader("💪 Productos más fuertes (Top 10 1-item itemsets)")
+            st.subheader("💪 Productos más fuertes (Top 10 itemsets de 1 producto)")
             if not fi.empty:
                 singles = fi[fi["itemsets"].apply(lambda s: len(s)==1)].sort_values("support", ascending=False).head(10).copy()
                 if not singles.empty:
@@ -975,7 +977,7 @@ if uploaded is not None:
                     st.info("No single-item itemsets at this support threshold.")
 
             # --- Optional visuals / images section ---
-            st.subheader("🖼️ Visuals")
+            st.subheader("🖼️ Visuales")
             img_files = []
             default_paths = [
                 "67A69E2F-D98B-48B5-B15B-E33F0341462B.png",
@@ -984,7 +986,7 @@ if uploaded is not None:
             for p in default_paths:
                 if os.path.exists(p):
                     img_files.append(p)
-            uploaded_imgs = st.file_uploader("Add images (optional)", type=["png","jpg","jpeg"], accept_multiple_files=True)
+            uploaded_imgs = st.file_uploader("Agregar imágenes (opcional)", type=["png","jpg","jpeg"], accept_multiple_files=True)
             if uploaded_imgs:
                 for uf in uploaded_imgs:
                     img_files.append(uf)
@@ -995,11 +997,11 @@ if uploaded is not None:
                     except Exception:
                         st.image(im.read(), use_column_width=True)
             else:
-                st.caption("No images found. Upload one or place it next to the app as the filenames above.")
+                st.caption("No se encontraron imágenes. Sube una o colócala junto a la app con esos nombres de archivo.")
 
             st.dataframe(outputs["frequent_itemsets"], use_container_width=True)
 
-            st.subheader("🔗 Association Rules")
+            st.subheader("🔗 Reglas de asociación")
             st.dataframe(outputs["rules"], use_container_width=True)
 
             # Downloads
@@ -1013,10 +1015,10 @@ if uploaded is not None:
             # =======================
             # Comprehensive Visuals
             # =======================
-            st.header("📊 Visuals")
+            st.header("📊 Visuales")
 
             if plt is None:
-                st.warning("matplotlib is required for charts.")
+                st.warning("Se requiere matplotlib para las gráficas.")
             else:
                 oc, vc = outputs['detected_columns']
 
@@ -1031,8 +1033,8 @@ if uploaded is not None:
                 fi = outputs["frequent_itemsets"].copy()
 
                 # 1) Lift Matrix Heatmap (Top K products appearing in rules)
-                st.subheader("Product-to-Product Lift Matrix (Antecedent → Consequent)")
-                K = st.slider("How many products to include in heatmap", 5, 40, 10, 1, key="liftK")
+                st.subheader("Matriz de Lift producto-a-producto (Antecedente → Consecuente)")
+                K = st.slider("¿Cuántos productos incluir en el mapa de calor?", 5, 40, 10, 1, key="liftK")
                 # find products that appear in rules to improve density
                 def _flatten_sets(s):
                     out = []
@@ -1061,60 +1063,60 @@ if uploaded is not None:
                 ax.set_xticklabels(top_for_matrix, rotation=60, ha="right")
                 ax.set_yticks(range(len(top_for_matrix)))
                 ax.set_yticklabels(top_for_matrix)
-                ax.set_xlabel("Consequent Products")
-                ax.set_ylabel("Antecedent Products")
-                ax.set_title("Product-to-Product Lift Matrix (Antecedent → Consequent)")
+                ax.set_xlabel("Productos consecuentes")
+                ax.set_ylabel("Productos antecedentes")
+                ax.set_title("Matriz de Lift producto-a-producto (Antecedente → Consecuente)")
                 plt.colorbar(im, ax=ax, label="Lift")
                 st.pyplot(fig1)
 
                 # 2) Rules: Support vs Confidence (color = Lift)
-                st.subheader("Rules: Support vs Confidence (color = Lift)")
+                st.subheader("Reglas: Soporte vs Confianza (color = Lift)")
                 if not rules.empty:
                     fig2 = plt.figure()
                     ax2 = fig2.add_subplot(111)
                     sc = ax2.scatter(rules["support"], rules["confidence"], c=rules["lift"])
-                    ax2.set_xlabel("Support")
-                    ax2.set_ylabel("Confidence")
-                    ax2.set_title("Support vs Confidence (color = Lift)")
+                    ax2.set_xlabel("Soporte")
+                    ax2.set_ylabel("Confianza")
+                    ax2.set_title("Soporte vs Confianza (color = Lift)")
                     plt.colorbar(sc, ax=ax2, label="Lift")
                     st.pyplot(fig2)
                 else:
-                    st.info("No rules to plot.")
+                    st.info("No hay reglas para graficar.")
 
                 # 3) Distribution of Lift Values
-                st.subheader("Distribution of Lift Values")
+                st.subheader("Distribución de valores de Lift")
                 if not rules.empty:
                     fig3 = plt.figure()
                     ax3 = fig3.add_subplot(111)
                     ax3.hist(rules["lift"].dropna(), bins=30)
                     ax3.set_xlabel("Lift")
-                    ax3.set_ylabel("Frequency")
-                    ax3.set_title("Lift Distribution")
+                    ax3.set_ylabel("Frecuencia")
+                    ax3.set_title("Distribución de Lift")
                     st.pyplot(fig3)
 
                 # 4) Frequent Itemset Sizes
-                st.subheader("Frequent Itemset Sizes")
+                st.subheader("Tamaños de itemsets frecuentes")
                 if not fi.empty:
                     sizes = fi["itemsets"].apply(lambda s: len(s))
                     fig4 = plt.figure()
                     ax4 = fig4.add_subplot(111)
                     ax4.hist(sizes, bins=range(1, sizes.max()+2))
-                    ax4.set_xlabel("Itemset Size")
-                    ax4.set_ylabel("Count")
-                    ax4.set_title("Distribution of Frequent Itemset Sizes")
+                    ax4.set_xlabel("Tamaño del itemset")
+                    ax4.set_ylabel("Conteo")
+                    ax4.set_title("Distribución de tamaños de itemsets frecuentes")
                     st.pyplot(fig4)
 
                     # 5) Support distribution for itemsets
                     fig5 = plt.figure()
                     ax5 = fig5.add_subplot(111)
                     ax5.hist(fi["support"], bins=30)
-                    ax5.set_xlabel("Support")
-                    ax5.set_ylabel("Number of Itemsets")
-                    ax5.set_title("Support Distribution (Frequent Itemsets)")
+                    ax5.set_xlabel("Soporte")
+                    ax5.set_ylabel("Número de itemsets")
+                    ax5.set_title("Distribución del soporte (itemsets frecuentes)")
                     st.pyplot(fig5)
 
                 # 6) Most Frequent Antecedents / Consequents
-                st.subheader("Most Frequent Antecedents / Consequents in Rules (Top 10)")
+                st.subheader("Antecedentes / Consecuentes más frecuentes en las reglas (Top 10)")
                 if not rules.empty:
                     from collections import Counter
                     ant_counts = Counter()
@@ -1129,8 +1131,8 @@ if uploaded is not None:
                     ax6a.barh(range(len(ant_top.index[::-1])), ant_top.values[::-1])
                     ax6a.set_yticks(range(len(ant_top.index[::-1])))
                     ax6a.set_yticklabels(ant_top.index[::-1])
-                    ax6a.set_xlabel("Frequency in Rules")
-                    ax6a.set_title("Most Frequent Antecedents")
+                    ax6a.set_xlabel("Frecuencia en reglas")
+                    ax6a.set_title("Antecedentes más frecuentes")
                     st.pyplot(fig6a)
 
                     fig6b = plt.figure()
@@ -1138,41 +1140,41 @@ if uploaded is not None:
                     ax6b.barh(range(len(con_top.index[::-1])), con_top.values[::-1])
                     ax6b.set_yticks(range(len(con_top.index[::-1])))
                     ax6b.set_yticklabels(con_top.index[::-1])
-                    ax6b.set_xlabel("Frequency in Rules")
-                    ax6b.set_title("Most Frequent Consequents")
+                    ax6b.set_xlabel("Frecuencia en reglas")
+                    ax6b.set_title("Consecuentes más frecuentes")
                     st.pyplot(fig6b)
 
                 # 7) Confidence vs Lift (color = Support)
-                st.subheader("Confidence vs Lift (color = Support)")
+                st.subheader("Confianza vs Lift (color = Soporte)")
                 if not rules.empty:
                     fig7 = plt.figure()
                     ax7 = fig7.add_subplot(111)
                     sc2 = ax7.scatter(rules["confidence"], rules["lift"], c=rules["support"])
-                    ax7.set_xlabel("Confidence")
+                    ax7.set_xlabel("Confianza")
                     ax7.set_ylabel("Lift")
-                    ax7.set_title("Confidence vs Lift (color = Support)")
+                    ax7.set_title("Confianza vs Lift (color = Soporte)")
                     plt.colorbar(sc2, ax=ax7, label="Support")
                     st.pyplot(fig7)
 
                 # 8) Basket Size Histogram & Box Plot
-                st.subheader("Basket Size Distribution")
+                st.subheader("Distribución del tamaño de canasta")
                 fig8 = plt.figure()
                 ax8 = fig8.add_subplot(111)
                 ax8.hist(basket_sizes, bins=30)
-                ax8.set_xlabel("Items per Basket")
-                ax8.set_ylabel("Frequency")
-                ax8.set_title("Basket Size Histogram")
+                ax8.set_xlabel("Artículos por canasta")
+                ax8.set_ylabel("Frecuencia")
+                ax8.set_title("Histograma del tamaño de canasta")
                 st.pyplot(fig8)
 
                 fig9 = plt.figure()
                 ax9 = fig9.add_subplot(111)
                 ax9.boxplot(basket_sizes, vert=True)
-                ax9.set_ylabel("Items per Basket")
-                ax9.set_title("Basket Size Box Plot")
+                ax9.set_ylabel("Artículos por canasta")
+                ax9.set_title("Diagrama de caja del tamaño de canasta")
                 st.pyplot(fig9)
 
                 # 9) Product Frequency Pareto (Top 20)
-                st.subheader("Product Frequency (Pareto Analysis)")
+                st.subheader("Frecuencia de producto (Análisis de Pareto)")
                 topN = 20
                 pf_top = pf.head(topN).copy()
                 pf_top["cum_share"] = pf_top["count"].cumsum() / pf_top["count"].sum() * 100.0
@@ -1181,8 +1183,8 @@ if uploaded is not None:
                 ax10.bar(range(len(pf_top)), pf_top["count"])
                 ax10.set_xticks(range(len(pf_top)))
                 ax10.set_xticklabels(pf_top["product"], rotation=60, ha="right")
-                ax10.set_ylabel("Frequency")
-                ax10.set_title("Top 20 Products by Frequency (bars) with Cumulative % (line)")
+                ax10.set_ylabel("Frecuencia")
+                ax10.set_title("Top 20 productos por frecuencia (barras) con % acumulado (línea)")
                 ax10_2 = ax10.twinx()
                 ax10_2.plot(range(len(pf_top)), pf_top["cum_share"])
                 ax10_2.set_ylabel("Cumulative %")
@@ -1190,5 +1192,5 @@ if uploaded is not None:
 
 
 else:
-    st.info("Upload a CSV to begin. If you want me to hardwire your notebook's dataset and visuals, share the sample CSV (e.g., Apriori_data.csv) used in the notebook.")
+    st.info("Sube un CSV para comenzar. Si quieres que fije el conjunto de datos/visuales de tu notebook, comparte el CSV de muestra (p.ej., Apriori_data.csv).")
 
