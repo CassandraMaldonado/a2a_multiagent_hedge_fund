@@ -4,3 +4,4 @@ numpy
 mlxtend
 matplotlib
 seaborn
+networkx
