@@ -899,6 +899,105 @@ if uploaded is not None:
                 st.pyplot(plt.gcf())
 
             st.subheader("📈 Frequent Itemsets")
+            # --- Top 10 Association Rules ---
+            st.subheader("🔝 Top 10 Association Rules (ranked by Lift, Confidence, Support)")
+            top10_rules = outputs["rules"].copy()
+            def _set_to_text(s):
+                try:
+                    return " + ".join(sorted(list(s)))
+                except Exception:
+                    return str(s)
+            if not top10_rules.empty:
+                top10_rules = top10_rules.assign(
+                    antecedent_text=top10_rules["antecedents"].apply(_set_to_text),
+                    consequent_text=top10_rules["consequents"].apply(_set_to_text),
+                    rule=lambda d: d["antecedent_text"] + " → " + d["consequent_text"]
+                ).sort_values(["lift","confidence","support"], ascending=False).head(10)
+                st.dataframe(top10_rules[["rule","support","confidence","lift"]], use_container_width=True)
+            else:
+                st.info("No rules to display.")
+
+            # --- Top 10 Most Frequent Products ---
+            st.subheader("🏅 Top 10 Most Frequent Products")
+            top10_products = outputs["product_frequency"].head(10).copy()
+            st.dataframe(top10_products, use_container_width=True)
+            if sns is not None and plt is not None and not top10_products.empty:
+                plt.figure()
+                sns.barplot(data=top10_products, x="count", y="product")
+                plt.title("Top 10 Products by Frequency")
+                st.pyplot(plt.gcf())
+
+            # --- Oportunidades (High Lift, Low Support) ---
+            st.subheader("💡 Oportunidades (High Lift • Low Support)")
+            colA, colB, colC = st.columns(3)
+            with colA:
+                opp_min_lift = st.number_input("Min Lift (Oportunidades)", min_value=1.0, max_value=50.0, value=2.0, step=0.1)
+            with colB:
+                opp_max_support = st.number_input("Max Support", min_value=0.0, max_value=float(outputs["rules"]["support"].max() if not outputs["rules"].empty else 0.5), value=0.03, step=0.005, format="%.3f")
+            with colC:
+                opp_topn = st.number_input("Show Top N", min_value=5, max_value=100, value=20, step=5)
+            oportunidades = outputs["rules"].copy()
+            if not oportunidades.empty:
+                oportunidades = oportunidades[(oportunidades["lift"] >= opp_min_lift) & (oportunidades["support"] <= opp_max_support)]\
+                    .sort_values(["lift","confidence","support"], ascending=False).head(int(opp_topn))
+                if not oportunidades.empty:
+                    oportunidades = oportunidades.assign(
+                        antecedent_text=oportunidades["antecedents"].apply(_set_to_text),
+                        consequent_text=oportunidades["consequents"].apply(_set_to_text),
+                        rule=lambda d: d["antecedent_text"] + " → " + d["consequent_text"]
+                    )
+                    st.dataframe(oportunidades[["rule","support","confidence","lift"]], use_container_width=True)
+                else:
+                    st.info("No opportunities at these thresholds. Try lowering Max Support or Min Lift.")
+            else:
+                st.info("No rules calculated to derive opportunities.")
+
+            # --- Pares Frecuentes (Top Frequent Pairs) ---
+            st.subheader("👫 Pares Frecuentes (Top 10 itemsets of size 2)")
+            fi = outputs["frequent_itemsets"].copy()
+            if not fi.empty:
+                pairs = fi[fi["itemsets"].apply(lambda s: len(s)==2)].sort_values("support", ascending=False).head(10).copy()
+                if not pairs.empty:
+                    pairs["pair"] = pairs["itemsets"].apply(lambda s: " + ".join(sorted(list(s))))
+                    st.dataframe(pairs[["pair","support"]], use_container_width=True)
+                else:
+                    st.info("No frequent pairs at current support.")
+            else:
+                st.info("No frequent itemsets yet.")
+
+            # --- Productos más fuertes (1-item itemsets by support) ---
+            st.subheader("💪 Productos más fuertes (Top 10 1-item itemsets)")
+            if not fi.empty:
+                singles = fi[fi["itemsets"].apply(lambda s: len(s)==1)].sort_values("support", ascending=False).head(10).copy()
+                if not singles.empty:
+                    singles["producto"] = singles["itemsets"].apply(lambda s: next(iter(s)))
+                    st.dataframe(singles[["producto","support"]], use_container_width=True)
+                else:
+                    st.info("No single-item itemsets at this support threshold.")
+
+            # --- Optional visuals / images section ---
+            st.subheader("🖼️ Visuals")
+            img_files = []
+            default_paths = [
+                "67A69E2F-D98B-48B5-B15B-E33F0341462B.png",
+                "BDB36D4B-CD16-47F4-8E2E-97FAAC3A8ECF.jpeg",
+            ]
+            for p in default_paths:
+                if os.path.exists(p):
+                    img_files.append(p)
+            uploaded_imgs = st.file_uploader("Add images (optional)", type=["png","jpg","jpeg"], accept_multiple_files=True)
+            if uploaded_imgs:
+                for uf in uploaded_imgs:
+                    img_files.append(uf)
+            if img_files:
+                for im in img_files:
+                    try:
+                        st.image(im, use_column_width=True)
+                    except Exception:
+                        st.image(im.read(), use_column_width=True)
+            else:
+                st.caption("No images found. Upload one or place it next to the app as the filenames above.")
+
             st.dataframe(outputs["frequent_itemsets"], use_container_width=True)
 
             st.subheader("🔗 Association Rules")
