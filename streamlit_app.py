@@ -18,9 +18,43 @@ try:
 except Exception as e:
     st.warning("mlxtend is required for Apriori analysis. Install with: pip install mlxtend")
 
-st.set_page_config(page_title="Bundles/Aurora – Panel de Canastas de Mercado", layout="wide")
 
-st.title("🧺 Bundles / Panel de Canastas de Mercado")
+# Streamlit theme configuration
+st.set_page_config(
+    page_title="Bundles Aurora - Panel de Canastas de Mercado",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+# Custom CSS for neutral clean design
+st.markdown(
+    """
+    <style>
+    /* Set background color and font */
+    body {
+        background-color: #f9f9f9;
+        color: #333333;
+        font-family: 'Helvetica Neue', sans-serif;
+    }
+    /* Headings */
+    h1, h2, h3, h4 {
+        color: #2c3e50;
+    }
+    /* Sidebar */
+    section[data-testid="stSidebar"] {
+        background-color: #f0f2f6;
+    }
+    /* Dataframes */
+    .stDataFrame {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.title("Bundles / Panel de Canastas de Mercado")
 st.caption("Aplicación interactiva generada desde tu notebook. Sube un CSV de transacciones y explora itemsets frecuentes y reglas de asociación.")
 
 st.sidebar.header("Carga y Configuración")
@@ -867,7 +901,7 @@ if uploaded is not None:
         df = None
 
     if df is not None:
-        st.subheader("📄 Datos crudos (primeras 200 filas)")
+        st.subheader("Datos crudos (primeras 200 filas)")
         st.dataframe(df.head(200), use_container_width=True)
         with st.expander("Columnas detectadas", expanded=True):
             oc, vc = try_detect_columns(df)
@@ -889,7 +923,7 @@ if uploaded is not None:
             with c3:
                 st.metric("Tamaño codificado", f"{outputs['df_encoded_shape'][0]} × {outputs['df_encoded_shape'][1]}")
 
-            st.subheader("🏆 Productos más frecuentes")
+            st.subheader("Productos más frecuentes")
             st.dataframe(outputs["top_frequency"], use_container_width=True)
 
             if sns is not None and plt is not None:
@@ -899,9 +933,9 @@ if uploaded is not None:
                 plt.title("Productos más frecuentes por conteo")
                 st.pyplot(plt.gcf())
 
-            st.subheader("📈 Itemsets frecuentes")
+            st.subheader("Itemsets frecuentes")
             # --- Top 10 Association Rules ---
-            st.subheader("🔝 Top 10 Reglas de asociación (por Lift, Confianza, Soporte)")
+            st.subheader("Top 10 Reglas de asociación (por Lift, Confianza, Soporte)")
             top10_rules = outputs["rules"].copy()
             def _set_to_text(s):
                 try:
@@ -919,7 +953,7 @@ if uploaded is not None:
                 st.info("No rules to display.")
 
             # --- Top 10 Most Frequent Products ---
-            st.subheader("🏅 Top 10 Productos más frecuentes")
+            st.subheader("Top 10 Productos más frecuentes")
             top10_products = outputs["product_frequency"].head(10).copy()
             st.dataframe(top10_products, use_container_width=True)
             if sns is not None and plt is not None and not top10_products.empty:
@@ -929,7 +963,7 @@ if uploaded is not None:
                 st.pyplot(plt.gcf())
 
             # --- Oportunidades (High Lift, Low Support) ---
-            st.subheader("💡 Oportunidades (Lift alto • Soporte bajo)")
+            st.subheader("Oportunidades (Lift alto • Soporte bajo)")
             colA, colB, colC = st.columns(3)
             with colA:
                 opp_min_lift = st.number_input("Lift mínimo (Oportunidades)", min_value=1.0, max_value=50.0, value=2.0, step=0.1)
@@ -954,7 +988,7 @@ if uploaded is not None:
                 st.info("No rules calculated to derive opportunities.")
 
             # --- Pares Frecuentes (Top Frequent Pairs) ---
-            st.subheader("👫 Pares frecuentes (Top 10 itemsets de tamaño 2)")
+            st.subheader("Pares frecuentes (Top 10 itemsets de tamaño 2)")
             fi = outputs["frequent_itemsets"].copy()
             if not fi.empty:
                 pairs = fi[fi["itemsets"].apply(lambda s: len(s)==2)].sort_values("support", ascending=False).head(10).copy()
@@ -967,7 +1001,7 @@ if uploaded is not None:
                 st.info("No frequent itemsets yet.")
 
             # --- Productos más fuertes (1-item itemsets by support) ---
-            st.subheader("💪 Productos más fuertes (Top 10 itemsets de 1 producto)")
+            st.subheader("Productos más fuertes (Top 10 itemsets de 1 producto)")
             if not fi.empty:
                 singles = fi[fi["itemsets"].apply(lambda s: len(s)==1)].sort_values("support", ascending=False).head(10).copy()
                 if not singles.empty:
@@ -977,35 +1011,15 @@ if uploaded is not None:
                     st.info("No single-item itemsets at this support threshold.")
 
             # --- Optional visuals / images section ---
-            st.subheader("🖼️ Visuales")
-            img_files = []
-            default_paths = [
-                "67A69E2F-D98B-48B5-B15B-E33F0341462B.png",
-                "BDB36D4B-CD16-47F4-8E2E-97FAAC3A8ECF.jpeg",
-            ]
-            for p in default_paths:
-                if os.path.exists(p):
-                    img_files.append(p)
-            uploaded_imgs = st.file_uploader("Agregar imágenes (opcional)", type=["png","jpg","jpeg"], accept_multiple_files=True)
-            if uploaded_imgs:
-                for uf in uploaded_imgs:
-                    img_files.append(uf)
-            if img_files:
-                for im in img_files:
-                    try:
-                        st.image(im, use_column_width=True)
-                    except Exception:
-                        st.image(im.read(), use_column_width=True)
-            else:
-                st.caption("No se encontraron imágenes. Sube una o colócala junto a la app con esos nombres de archivo.")
+            
 
             st.dataframe(outputs["frequent_itemsets"], use_container_width=True)
 
-            st.subheader("🔗 Reglas de asociación")
+            st.subheader("Reglas de asociación")
             st.dataframe(outputs["rules"], use_container_width=True)
 
             # Downloads
-            st.subheader("⬇️ Downloads")
+            st.subheader("⬇ Downloads")
             def df_to_csv_bytes(df_):
                 return df_.to_csv(index=False).encode("utf-8")
 
@@ -1015,7 +1029,7 @@ if uploaded is not None:
             # =======================
             # Comprehensive Visuals
             # =======================
-            st.header("📊 Visuales")
+            st.header("Visuales")
 
             if plt is None:
                 st.warning("Se requiere matplotlib para las gráficas.")
