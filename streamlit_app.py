@@ -5,11 +5,10 @@ import numpy as np
 
 # Try to import optional libs used in the notebook
 try:
-    import seaborn as sns
     import matplotlib.pyplot as plt
 except Exception:
-    sns = None
     plt = None
+sns = None  # enforce matplotlib-only for charts
 
 # mlxtend for apriori
 try:
@@ -1011,6 +1010,184 @@ if uploaded is not None:
             st.download_button("Download frequent_itemsets.csv", data=df_to_csv_bytes(outputs["frequent_itemsets"]), file_name="frequent_itemsets.csv")
             st.download_button("Download association_rules.csv", data=df_to_csv_bytes(outputs["rules"]), file_name="association_rules.csv")
             st.download_button("Download product_frequency.csv", data=df_to_csv_bytes(outputs["product_frequency"]), file_name="product_frequency.csv")
+            # =======================
+            # Comprehensive Visuals
+            # =======================
+            st.header("📊 Visuals")
+
+            if plt is None:
+                st.warning("matplotlib is required for charts.")
+            else:
+                oc, vc = outputs['detected_columns']
+
+                # --- Prep basics ---
+                # Baskets and basket sizes
+                baskets = df.groupby(oc)[vc].apply(lambda s: [str(x) for x in s.dropna().tolist()])
+                basket_sizes = baskets.apply(len).values
+
+                # Convenience: top products and rules
+                pf = outputs["product_frequency"].copy()
+                rules = outputs["rules"].copy()
+                fi = outputs["frequent_itemsets"].copy()
+
+                # 1) Lift Matrix Heatmap (Top K products appearing in rules)
+                st.subheader("Product-to-Product Lift Matrix (Antecedent → Consequent)")
+                K = st.slider("How many products to include in heatmap", 5, 40, 10, 1, key="liftK")
+                # find products that appear in rules to improve density
+                def _flatten_sets(s):
+                    out = []
+                    for t in s:
+                        out.extend(list(t))
+                    return out
+                prod_in_rules = pd.Series(_flatten_sets(rules["antecedents"])) if not rules.empty else pd.Series([], dtype=str)
+                prod_in_rules = pd.concat([prod_in_rules, pd.Series(_flatten_sets(rules["consequents"]))], ignore_index=True) if not rules.empty else prod_in_rules
+                if not prod_in_rules.empty:
+                    top_for_matrix = prod_in_rules.value_counts().head(K).index.tolist()
+                else:
+                    top_for_matrix = pf["product"].head(K).tolist()
+
+                lift_matrix = pd.DataFrame(index=top_for_matrix, columns=top_for_matrix, dtype=float)
+                lift_matrix[:] = np.nan
+                if not rules.empty:
+                    for _, rrow in rules.iterrows():
+                        for a in list(rrow["antecedents"]):
+                            for c in list(rrow["consequents"]):
+                                if a in lift_matrix.index and c in lift_matrix.columns:
+                                    lift_matrix.loc[a, c] = rrow["lift"]
+                fig1 = plt.figure()
+                ax = fig1.add_subplot(111)
+                im = ax.imshow(lift_matrix.values, aspect="auto")
+                ax.set_xticks(range(len(top_for_matrix)))
+                ax.set_xticklabels(top_for_matrix, rotation=60, ha="right")
+                ax.set_yticks(range(len(top_for_matrix)))
+                ax.set_yticklabels(top_for_matrix)
+                ax.set_xlabel("Consequent Products")
+                ax.set_ylabel("Antecedent Products")
+                ax.set_title("Product-to-Product Lift Matrix (Antecedent → Consequent)")
+                plt.colorbar(im, ax=ax, label="Lift")
+                st.pyplot(fig1)
+
+                # 2) Rules: Support vs Confidence (color = Lift)
+                st.subheader("Rules: Support vs Confidence (color = Lift)")
+                if not rules.empty:
+                    fig2 = plt.figure()
+                    ax2 = fig2.add_subplot(111)
+                    sc = ax2.scatter(rules["support"], rules["confidence"], c=rules["lift"])
+                    ax2.set_xlabel("Support")
+                    ax2.set_ylabel("Confidence")
+                    ax2.set_title("Support vs Confidence (color = Lift)")
+                    plt.colorbar(sc, ax=ax2, label="Lift")
+                    st.pyplot(fig2)
+                else:
+                    st.info("No rules to plot.")
+
+                # 3) Distribution of Lift Values
+                st.subheader("Distribution of Lift Values")
+                if not rules.empty:
+                    fig3 = plt.figure()
+                    ax3 = fig3.add_subplot(111)
+                    ax3.hist(rules["lift"].dropna(), bins=30)
+                    ax3.set_xlabel("Lift")
+                    ax3.set_ylabel("Frequency")
+                    ax3.set_title("Lift Distribution")
+                    st.pyplot(fig3)
+
+                # 4) Frequent Itemset Sizes
+                st.subheader("Frequent Itemset Sizes")
+                if not fi.empty:
+                    sizes = fi["itemsets"].apply(lambda s: len(s))
+                    fig4 = plt.figure()
+                    ax4 = fig4.add_subplot(111)
+                    ax4.hist(sizes, bins=range(1, sizes.max()+2))
+                    ax4.set_xlabel("Itemset Size")
+                    ax4.set_ylabel("Count")
+                    ax4.set_title("Distribution of Frequent Itemset Sizes")
+                    st.pyplot(fig4)
+
+                    # 5) Support distribution for itemsets
+                    fig5 = plt.figure()
+                    ax5 = fig5.add_subplot(111)
+                    ax5.hist(fi["support"], bins=30)
+                    ax5.set_xlabel("Support")
+                    ax5.set_ylabel("Number of Itemsets")
+                    ax5.set_title("Support Distribution (Frequent Itemsets)")
+                    st.pyplot(fig5)
+
+                # 6) Most Frequent Antecedents / Consequents
+                st.subheader("Most Frequent Antecedents / Consequents in Rules (Top 10)")
+                if not rules.empty:
+                    from collections import Counter
+                    ant_counts = Counter()
+                    con_counts = Counter()
+                    for _, rrow in rules.iterrows():
+                        ant_counts.update(list(rrow["antecedents"]))
+                        con_counts.update(list(rrow["consequents"]))
+                    ant_top = pd.Series(ant_counts).sort_values(ascending=False).head(10)
+                    con_top = pd.Series(con_counts).sort_values(ascending=False).head(10)
+                    fig6a = plt.figure()
+                    ax6a = fig6a.add_subplot(111)
+                    ax6a.barh(range(len(ant_top.index[::-1])), ant_top.values[::-1])
+                    ax6a.set_yticks(range(len(ant_top.index[::-1])))
+                    ax6a.set_yticklabels(ant_top.index[::-1])
+                    ax6a.set_xlabel("Frequency in Rules")
+                    ax6a.set_title("Most Frequent Antecedents")
+                    st.pyplot(fig6a)
+
+                    fig6b = plt.figure()
+                    ax6b = fig6b.add_subplot(111)
+                    ax6b.barh(range(len(con_top.index[::-1])), con_top.values[::-1])
+                    ax6b.set_yticks(range(len(con_top.index[::-1])))
+                    ax6b.set_yticklabels(con_top.index[::-1])
+                    ax6b.set_xlabel("Frequency in Rules")
+                    ax6b.set_title("Most Frequent Consequents")
+                    st.pyplot(fig6b)
+
+                # 7) Confidence vs Lift (color = Support)
+                st.subheader("Confidence vs Lift (color = Support)")
+                if not rules.empty:
+                    fig7 = plt.figure()
+                    ax7 = fig7.add_subplot(111)
+                    sc2 = ax7.scatter(rules["confidence"], rules["lift"], c=rules["support"])
+                    ax7.set_xlabel("Confidence")
+                    ax7.set_ylabel("Lift")
+                    ax7.set_title("Confidence vs Lift (color = Support)")
+                    plt.colorbar(sc2, ax=ax7, label="Support")
+                    st.pyplot(fig7)
+
+                # 8) Basket Size Histogram & Box Plot
+                st.subheader("Basket Size Distribution")
+                fig8 = plt.figure()
+                ax8 = fig8.add_subplot(111)
+                ax8.hist(basket_sizes, bins=30)
+                ax8.set_xlabel("Items per Basket")
+                ax8.set_ylabel("Frequency")
+                ax8.set_title("Basket Size Histogram")
+                st.pyplot(fig8)
+
+                fig9 = plt.figure()
+                ax9 = fig9.add_subplot(111)
+                ax9.boxplot(basket_sizes, vert=True)
+                ax9.set_ylabel("Items per Basket")
+                ax9.set_title("Basket Size Box Plot")
+                st.pyplot(fig9)
+
+                # 9) Product Frequency Pareto (Top 20)
+                st.subheader("Product Frequency (Pareto Analysis)")
+                topN = 20
+                pf_top = pf.head(topN).copy()
+                pf_top["cum_share"] = pf_top["count"].cumsum() / pf_top["count"].sum() * 100.0
+                fig10 = plt.figure()
+                ax10 = fig10.add_subplot(111)
+                ax10.bar(range(len(pf_top)), pf_top["count"])
+                ax10.set_xticks(range(len(pf_top)))
+                ax10.set_xticklabels(pf_top["product"], rotation=60, ha="right")
+                ax10.set_ylabel("Frequency")
+                ax10.set_title("Top 20 Products by Frequency (bars) with Cumulative % (line)")
+                ax10_2 = ax10.twinx()
+                ax10_2.plot(range(len(pf_top)), pf_top["cum_share"])
+                ax10_2.set_ylabel("Cumulative %")
+                st.pyplot(fig10)
+
 
 else:
     st.info("Upload a CSV to begin. If you want me to hardwire your notebook's dataset and visuals, share the sample CSV (e.g., Apriori_data.csv) used in the notebook.")
