@@ -59,34 +59,3 @@ This system is designed as a modular, real-time investment strategy engine. It l
     import sys
     sys.path.append("/content/src")
     ```
-
----
-
-## Example Run
-
-```python
-from langgraph.graph import StateGraph
-from state.agent_state import create_empty_state
-from nodes.market_data_node import MarketDataNode
-from nodes.sentiment_node import SentimentNode
-from nodes.macro_econ_node import MacroEconNode
-from nodes.forecasting_risk_strategist import ForecastingNode
-
-graph = StateGraph()
-graph.add_node("market", MarketDataNode(config))
-graph.add_node("sentiment", SentimentNode(config))
-graph.add_node("macro", MacroEconNode(config))
-graph.add_node("forecast", ForecastingNode(config))
-
-graph.set_entry_point("market")
-graph.add_edge("market", "sentiment")
-graph.add_edge("sentiment", "macro")
-graph.add_edge("macro", "forecast")
-graph.set_exit_point("forecast")
-app = graph.compile()
-
-state = create_empty_state(["AAPL", "BTC-USD"], config)
-state["start_date"] = "2024-01-01"
-state["end_date"] = "2024-02-01"
-
-results = app.invoke(state)
