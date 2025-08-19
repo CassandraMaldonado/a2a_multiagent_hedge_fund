@@ -1,6 +1,6 @@
-# 🧠 GenAI Financial Forecaster: A Personal Agentic AI Project
+# GenAI Financial Forecaster: A Personal Agentic AI Project
 
-This is a personal project I built as part of my Master’s in Applied Data Science at the University of Chicago. The goal was to explore how **agentic workflows** and **generative AI** can be used to support financial decision-making — from market forecasting to personal investment planning.
+This is a personal project I built as part of my Master’s in Applied Data Science at the University of Chicago. The goal was to explore how agentic workflows and generative AI can be used to support financial decision-making — from market forecasting to personal investment planning.
 
 While inspired by open-source repos like `ai-hedge-fund`, I wanted to better understand the inner workings by building my own version using modular agents, real APIs, and LLM reasoning.
 
