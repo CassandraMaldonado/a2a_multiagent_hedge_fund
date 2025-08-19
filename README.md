@@ -6,7 +6,7 @@ While inspired by open-source repos like `ai-hedge-fund`, I wanted to better und
 
 ---
 
-## 🧩 What It Does
+## What It Does
 
 This system simulates a simplified investment assistant that takes in:
 - Real-time market data
@@ -20,7 +20,7 @@ There’s also an in-progress **FinancePlannerNode** that takes user goals (e.g.
 
 ---
 
-## 🕸️ Agentic Workflow
+## Agentic Workflow
 
 The project is built around modular agents that pass and update a shared `AgentState` — similar to how LangGraph or CrewAI works.
 
@@ -36,7 +36,7 @@ The project is built around modular agents that pass and update a shared `AgentS
 
 ---
 
-## 🔌 Real Integrations
+## Real Integrations
 
 This project connects to real APIs:
 
@@ -49,7 +49,7 @@ This project connects to real APIs:
 
 ---
 
-## 📊 Streamlit Dashboard (Coming Soon)
+## Streamlit Dashboard (Coming Soon)
 
 A front-end dashboard is being developed using Streamlit to show:
 - Forecasts vs actual prices
@@ -60,7 +60,7 @@ A front-end dashboard is being developed using Streamlit to show:
 
 ---
 
-## 💡 Why I Built This
+## Why I Built This
 
 I wanted to go beyond traditional modeling and explore how AI agents can collaborate across domains — economics, NLP, time series — and build toward an assistant that feels more adaptive and insightful.
 
@@ -73,7 +73,7 @@ This is still a work-in-progress, but I’ve learned a lot about:
 
 ---
 
-## 🧪 How to Run
+## How to Run
 
 1. Clone the repo
 2. Add your API keys in a `.env` file or use Colab secrets
@@ -82,7 +82,7 @@ This is still a work-in-progress, but I’ve learned a lot about:
 
 ---
 
-## 📚 Credits
+## Credits
 
 This project is inspired by:
 - [virattt/ai-hedge-fund](https://github.com/virattt/ai-hedge-fund)
@@ -91,7 +91,7 @@ This project is inspired by:
 
 ---
 
-## 🧑‍💻 Built By
+## Built By
 
 Cassandra Maldonado  
 M.S. in Applied Data Science  
