@@ -9,7 +9,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import json
 
-# Configure Streamlit page first (before any other imports)
+# Configure Streamlit page first
 st.set_page_config(
     page_title="🤖 AI Financial Forecasting",
     page_icon="📈",
@@ -188,310 +188,6 @@ def run_analysis_pipeline(symbol, openai_key=None, financial_goal=None):
             if 'run_complete_analysis' in globals():
                 return run_complete_analysis(symbol)
             else:
-        st.markdown(f"""
-        <div class="warning-container">
-            <h2>⚠️ NEEDS ADJUSTMENT</h2>
-            <h3>Success Probability: {success_prob:.1%}</h3>
-            <p>Projected Value: ${projected_value:,.0f}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Plan metrics
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("#### 📊 Plan Metrics")
-        st.write(f"**Plan Sharpe Ratio:** {getattr(financial_plan, 'plan_sharpe_ratio', 0):.2f}")
-        st.write(f"**Plan Volatility:** {getattr(financial_plan, 'plan_volatility', 0):.1%}")
-        st.write(f"**Max Drawdown:** {getattr(financial_plan, 'plan_max_drawdown', 0):.1%}")
-        st.write(f"**Required Monthly:** ${getattr(financial_plan, 'required_monthly', 0):,.0f}")
-    
-    with col2:
-        st.markdown("#### 🎯 Asset Allocation")
-        allocation = getattr(financial_plan, 'asset_allocation', {})
-        for asset, percent in allocation.items():
-            st.write(f"**{asset.replace('_', ' ').title()}:** {percent:.1%}")
-    
-    # Recommendations
-    recommendations = getattr(financial_plan, 'recommendations', [])
-    if recommendations:
-        st.markdown("#### 💡 Key Recommendations")
-        for i, rec in enumerate(recommendations[:5], 1):
-            st.write(f"{i}. {rec}")
-
-def display_charts(results):
-    """Display interactive charts"""
-    
-    st.markdown("### 📊 Interactive Charts")
-    
-    # Market data chart
-    market_data = results.get('market_data')
-    if market_data and hasattr(market_data, 'prices'):
-        fig = go.Figure()
-        
-        prices = market_data.prices
-        fig.add_trace(go.Scatter(
-            x=prices.index,
-            y=prices.values,
-            mode='lines',
-            name='Price',
-            line=dict(color='#1f77b4', width=2)
-        ))
-        
-        # Add support/resistance lines
-        if hasattr(market_data, 'support_level'):
-            fig.add_hline(y=market_data.support_level, 
-                         line_dash="dash", line_color="green",
-                         annotation_text="Support")
-        
-        if hasattr(market_data, 'resistance_level'):
-            fig.add_hline(y=market_data.resistance_level, 
-                         line_dash="dash", line_color="red",
-                         annotation_text="Resistance")
-        
-        fig.update_layout(
-            title=f"{results.get('symbol', 'Stock')} Price Chart",
-            xaxis_title="Date",
-            yaxis_title="Price ($)",
-            height=500,
-            showlegend=True
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # Risk metrics chart
-    risk_metrics = results.get('risk_metrics')
-    if risk_metrics and hasattr(risk_metrics, 'rolling_volatility') and not risk_metrics.rolling_volatility.empty:
-        fig2 = go.Figure()
-        
-        rolling_vol = risk_metrics.rolling_volatility
-        fig2.add_trace(go.Scatter(
-            x=rolling_vol.index,
-            y=rolling_vol.values * 100,  # Convert to percentage
-            mode='lines',
-            name='Rolling Volatility',
-            line=dict(color='#ff7f0e', width=2)
-        ))
-        
-        fig2.update_layout(
-            title="Rolling 20-Day Volatility",
-            xaxis_title="Date",
-            yaxis_title="Volatility (%)",
-            height=400
-        )
-        
-        st.plotly_chart(fig2, use_container_width=True)
-    
-    # Forecast comparison chart
-    forecast_data = results.get('forecast_data')
-    if forecast_data:
-        forecasts = {
-            'ARIMA': getattr(forecast_data, 'arima_forecast', 0),
-            'Prophet': getattr(forecast_data, 'prophet_forecast', 0),
-            'LSTM': getattr(forecast_data, 'lstm_forecast', 0),
-            'Ensemble': getattr(forecast_data, 'ensemble_forecast', 0)
-        }
-        
-        fig3 = go.Figure(data=[
-            go.Bar(x=list(forecasts.keys()), y=list(forecasts.values()))
-        ])
-        
-        fig3.update_layout(
-            title="Price Forecast Comparison",
-            xaxis_title="Model",
-            yaxis_title="Predicted Price ($)",
-            height=400
-        )
-        
-        st.plotly_chart(fig3, use_container_width=True)
-
-def display_download_section(results):
-    """Display download options"""
-    
-    st.markdown("### 📥 Export Results")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        # JSON download
-        try:
-            # Convert results to JSON-serializable format
-            json_data = {}
-            for key, value in results.items():
-                if hasattr(value, '__dict__'):
-                    json_data[key] = {attr: getattr(value, attr) for attr in dir(value) 
-                                    if not attr.startswith('_') and not callable(getattr(value, attr))}
-                else:
-                    json_data[key] = value
-            
-            json_string = json.dumps(json_data, indent=2, default=str)
-            st.download_button(
-                label="📄 Download JSON",
-                data=json_string,
-                file_name=f"{results.get('symbol', 'analysis')}_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                mime="application/json"
-            )
-        except Exception as e:
-            st.error(f"JSON export failed: {e}")
-    
-    with col2:
-        # Summary report
-        try:
-            summary = create_summary_report(results)
-            st.download_button(
-                label="📋 Download Summary",
-                data=summary,
-                file_name=f"{results.get('symbol', 'analysis')}_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                mime="text/plain"
-            )
-        except Exception as e:
-            st.error(f"Summary export failed: {e}")
-    
-    with col3:
-        # CSV data
-        try:
-            market_data = results.get('market_data')
-            if market_data and hasattr(market_data, 'prices'):
-                csv_data = pd.DataFrame({
-                    'Date': market_data.prices.index,
-                    'Price': market_data.prices.values
-                })
-                csv_string = csv_data.to_csv(index=False)
-                st.download_button(
-                    label="📊 Download CSV",
-                    data=csv_string,
-                    file_name=f"{results.get('symbol', 'data')}_prices_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
-        except Exception as e:
-            st.error(f"CSV export failed: {e}")
-
-def create_summary_report(results):
-    """Create a text summary report"""
-    
-    symbol = results.get('symbol', 'UNKNOWN')
-    report = f"""
-AI FINANCIAL ANALYSIS REPORT
-============================
-Symbol: {symbol}
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-MARKET DATA SUMMARY
-------------------
-"""
-    
-    market_data = results.get('market_data')
-    if market_data:
-        report += f"""Current Price: ${getattr(market_data, 'current_price', 0):.2f}
-1-Day Return: {getattr(market_data, 'return_1d', 0):.2%}
-20-Day Volatility: {getattr(market_data, 'volatility_20d', 0):.1%}
-Trend: {getattr(market_data, 'trend', 'neutral').replace('_', ' ').title()}
-RSI: {getattr(market_data, 'rsi', 50):.1f}
-Support Level: ${getattr(market_data, 'support_level', 0):.2f}
-Resistance Level: ${getattr(market_data, 'resistance_level', 0):.2f}
-
-"""
-    
-    risk_metrics = results.get('risk_metrics')
-    if risk_metrics:
-        report += f"""RISK ANALYSIS
--------------
-Portfolio Volatility: {getattr(risk_metrics, 'portfolio_volatility', 0):.1%}
-Sharpe Ratio: {getattr(risk_metrics, 'sharpe_ratio', 0):.2f}
-Maximum Drawdown: {getattr(risk_metrics, 'maximum_drawdown', 0):.1%}
-VaR (5%): {getattr(risk_metrics, 'value_at_risk_5pct', 0):.1%}
-
-"""
-    
-    forecast_data = results.get('forecast_data')
-    if forecast_data:
-        report += f"""FORECASTS
----------
-Ensemble Forecast: ${getattr(forecast_data, 'ensemble_forecast', 0):.2f}
-Confidence: {getattr(forecast_data, 'forecast_confidence', 0.5):.1%}
-Upside Probability: {getattr(forecast_data, 'upside_probability', 0.5):.1%}
-
-"""
-    
-    recommendation = results.get('recommendation')
-    if recommendation:
-        report += f"""AI RECOMMENDATION
------------------
-Action: {getattr(recommendation, 'action', 'HOLD')}
-Confidence: {getattr(recommendation, 'confidence', 0.5):.1%}
-Position Size: {getattr(recommendation, 'position_size', 0):.1%}
-Risk Level: {getattr(recommendation, 'risk_level', 'MEDIUM')}
-Risk/Reward Ratio: {getattr(recommendation, 'risk_reward_ratio', 1.0):.2f}
-
-"""
-    
-    financial_plan = results.get('financial_plan')
-    if financial_plan:
-        report += f"""FINANCIAL PLANNING
-------------------
-Success Probability: {getattr(financial_plan, 'success_probability', 0):.1%}
-Projected Value: ${getattr(financial_plan, 'projected_value', 0):,.0f}
-Plan Sharpe Ratio: {getattr(financial_plan, 'plan_sharpe_ratio', 0):.2f}
-Required Monthly: ${getattr(financial_plan, 'required_monthly', 0):,.0f}
-
-"""
-    
-    report += """
-DISCLAIMER
-----------
-This analysis is for informational purposes only and should not be considered as financial advice.
-Always consult with a qualified financial advisor before making investment decisions.
-Past performance does not guarantee future results.
-"""
-    
-    return report
-
-# Show system status on startup
-if PIPELINE_LOADED:
-    st.sidebar.success("🚀 AI Pipeline Ready")
-    st.sidebar.markdown("**Available Agents:**")
-    agents = [
-        "📊 Market Data Agent",
-        "⚠️ Risk Analysis Agent", 
-        "🔮 Forecasting Agent",
-        "🌍 Macro Economic Agent",
-        "😊 Sentiment Agent",
-        "🧠 AI Strategist Agent",
-        "💰 Financial Planner Agent"
-    ]
-    for agent in agents:
-        st.sidebar.markdown(f"✅ {agent}")
-    
-    # Show async status
-    if NEST_ASYNCIO_AVAILABLE:
-        st.sidebar.success("🔄 Async Support: Available")
-    else:
-        st.sidebar.warning("🔄 Async Support: Limited")
-        
-    # Show plotting status
-    if PLOTLY_AVAILABLE:
-        st.sidebar.success("📊 Interactive Charts: Available")
-    else:
-        st.sidebar.warning("📊 Interactive Charts: Basic only")
-        
-else:
-    st.sidebar.error("❌ Pipeline Not Loaded")
-    st.sidebar.markdown("**Setup Required:**")
-    st.sidebar.markdown("1. Install dependencies")
-    st.sidebar.markdown("2. Add final_vCM.py file")
-    st.sidebar.markdown("3. Restart app")
-
-# Footer
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #666; padding: 2rem;">
-    <p>🤖 Powered by Multi-Agent AI Architecture | Built with Streamlit</p>
-    <p>⚠️ For educational purposes only. Not financial advice.</p>
-</div>
-""", unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main():
                 st.error("❌ No analysis functions available")
                 return None
         except Exception as e:
@@ -933,9 +629,9 @@ def display_forecasts(results):
         st.write(f"**Ensemble Forecast:** ${getattr(forecast_data, 'ensemble_forecast', 0):.2f}")
         
         # Calculate price change
-        current_price = results.get('market_data', {})
-        if hasattr(current_price, 'current_price'):
-            current = current_price.current_price
+        current_price_data = results.get('market_data')
+        if current_price_data and hasattr(current_price_data, 'current_price'):
+            current = current_price_data.current_price
             ensemble = getattr(forecast_data, 'ensemble_forecast', current)
             change = ((ensemble - current) / current) * 100
             st.write(f"**Expected Change:** {change:+.1f}%")
@@ -1033,4 +729,308 @@ def display_financial_plan(results):
             <p>Projected Value: ${projected_value:,.0f}</p>
         </div>
         """, unsafe_allow_html=True)
-    else
+    else:
+        st.markdown(f"""
+        <div class="warning-container">
+            <h2>⚠️ NEEDS ADJUSTMENT</h2>
+            <h3>Success Probability: {success_prob:.1%}</h3>
+            <p>Projected Value: ${projected_value:,.0f}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Plan metrics
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### 📊 Plan Metrics")
+        st.write(f"**Plan Sharpe Ratio:** {getattr(financial_plan, 'plan_sharpe_ratio', 0):.2f}")
+        st.write(f"**Plan Volatility:** {getattr(financial_plan, 'plan_volatility', 0):.1%}")
+        st.write(f"**Max Drawdown:** {getattr(financial_plan, 'plan_max_drawdown', 0):.1%}")
+        st.write(f"**Required Monthly:** ${getattr(financial_plan, 'required_monthly', 0):,.0f}")
+    
+    with col2:
+        st.markdown("#### 🎯 Asset Allocation")
+        allocation = getattr(financial_plan, 'asset_allocation', {})
+        for asset, percent in allocation.items():
+            st.write(f"**{asset.replace('_', ' ').title()}:** {percent:.1%}")
+    
+    # Recommendations
+    recommendations = getattr(financial_plan, 'recommendations', [])
+    if recommendations:
+        st.markdown("#### 💡 Key Recommendations")
+        for i, rec in enumerate(recommendations[:5], 1):
+            st.write(f"{i}. {rec}")
+
+def display_charts(results):
+    """Display interactive charts"""
+    
+    st.markdown("### 📊 Interactive Charts")
+    
+    # Market data chart
+    market_data = results.get('market_data')
+    if market_data and hasattr(market_data, 'prices'):
+        fig = go.Figure()
+        
+        prices = market_data.prices
+        fig.add_trace(go.Scatter(
+            x=prices.index,
+            y=prices.values,
+            mode='lines',
+            name='Price',
+            line=dict(color='#1f77b4', width=2)
+        ))
+        
+        # Add support/resistance lines
+        if hasattr(market_data, 'support_level'):
+            fig.add_hline(y=market_data.support_level, 
+                         line_dash="dash", line_color="green",
+                         annotation_text="Support")
+        
+        if hasattr(market_data, 'resistance_level'):
+            fig.add_hline(y=market_data.resistance_level, 
+                         line_dash="dash", line_color="red",
+                         annotation_text="Resistance")
+        
+        fig.update_layout(
+            title=f"{results.get('symbol', 'Stock')} Price Chart",
+            xaxis_title="Date",
+            yaxis_title="Price ($)",
+            height=500,
+            showlegend=True
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+    
+    # Risk metrics chart
+    risk_metrics = results.get('risk_metrics')
+    if risk_metrics and hasattr(risk_metrics, 'rolling_volatility') and not risk_metrics.rolling_volatility.empty:
+        fig2 = go.Figure()
+        
+        rolling_vol = risk_metrics.rolling_volatility
+        fig2.add_trace(go.Scatter(
+            x=rolling_vol.index,
+            y=rolling_vol.values * 100,  # Convert to percentage
+            mode='lines',
+            name='Rolling Volatility',
+            line=dict(color='#ff7f0e', width=2)
+        ))
+        
+        fig2.update_layout(
+            title="Rolling 20-Day Volatility",
+            xaxis_title="Date",
+            yaxis_title="Volatility (%)",
+            height=400
+        )
+        
+        st.plotly_chart(fig2, use_container_width=True)
+    
+    # Forecast comparison chart
+    forecast_data = results.get('forecast_data')
+    if forecast_data:
+        forecasts = {
+            'ARIMA': getattr(forecast_data, 'arima_forecast', 0),
+            'Prophet': getattr(forecast_data, 'prophet_forecast', 0),
+            'LSTM': getattr(forecast_data, 'lstm_forecast', 0),
+            'Ensemble': getattr(forecast_data, 'ensemble_forecast', 0)
+        }
+        
+        fig3 = go.Figure(data=[
+            go.Bar(x=list(forecasts.keys()), y=list(forecasts.values()))
+        ])
+        
+        fig3.update_layout(
+            title="Price Forecast Comparison",
+            xaxis_title="Model",
+            yaxis_title="Predicted Price ($)",
+            height=400
+        )
+        
+        st.plotly_chart(fig3, use_container_width=True)
+
+def display_download_section(results):
+    """Display download options"""
+    
+    st.markdown("### 📥 Export Results")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        # JSON download
+        try:
+            # Convert results to JSON-serializable format
+            json_data = {}
+            for key, value in results.items():
+                if hasattr(value, '__dict__'):
+                    json_data[key] = {attr: getattr(value, attr) for attr in dir(value) 
+                                    if not attr.startswith('_') and not callable(getattr(value, attr))}
+                else:
+                    json_data[key] = value
+            
+            json_string = json.dumps(json_data, indent=2, default=str)
+            st.download_button(
+                label="📄 Download JSON",
+                data=json_string,
+                file_name=f"{results.get('symbol', 'analysis')}_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json"
+            )
+        except Exception as e:
+            st.error(f"JSON export failed: {e}")
+    
+    with col2:
+        # Summary report
+        try:
+            summary = create_summary_report(results)
+            st.download_button(
+                label="📋 Download Summary",
+                data=summary,
+                file_name=f"{results.get('symbol', 'analysis')}_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain"
+            )
+        except Exception as e:
+            st.error(f"Summary export failed: {e}")
+    
+    with col3:
+        # CSV data
+        try:
+            market_data = results.get('market_data')
+            if market_data and hasattr(market_data, 'prices'):
+                csv_data = pd.DataFrame({
+                    'Date': market_data.prices.index,
+                    'Price': market_data.prices.values
+                })
+                csv_string = csv_data.to_csv(index=False)
+                st.download_button(
+                    label="📊 Download CSV",
+                    data=csv_string,
+                    file_name=f"{results.get('symbol', 'data')}_prices_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                    mime="text/csv"
+                )
+        except Exception as e:
+            st.error(f"CSV export failed: {e}")
+
+def create_summary_report(results):
+    """Create a text summary report"""
+    
+    symbol = results.get('symbol', 'UNKNOWN')
+    report = f"""
+AI FINANCIAL ANALYSIS REPORT
+============================
+Symbol: {symbol}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+MARKET DATA SUMMARY
+------------------
+"""
+    
+    market_data = results.get('market_data')
+    if market_data:
+        report += f"""Current Price: ${getattr(market_data, 'current_price', 0):.2f}
+1-Day Return: {getattr(market_data, 'return_1d', 0):.2%}
+20-Day Volatility: {getattr(market_data, 'volatility_20d', 0):.1%}
+Trend: {getattr(market_data, 'trend', 'neutral').replace('_', ' ').title()}
+RSI: {getattr(market_data, 'rsi', 50):.1f}
+Support Level: ${getattr(market_data, 'support_level', 0):.2f}
+Resistance Level: ${getattr(market_data, 'resistance_level', 0):.2f}
+
+"""
+    
+    risk_metrics = results.get('risk_metrics')
+    if risk_metrics:
+        report += f"""RISK ANALYSIS
+-------------
+Portfolio Volatility: {getattr(risk_metrics, 'portfolio_volatility', 0):.1%}
+Sharpe Ratio: {getattr(risk_metrics, 'sharpe_ratio', 0):.2f}
+Maximum Drawdown: {getattr(risk_metrics, 'maximum_drawdown', 0):.1%}
+VaR (5%): {getattr(risk_metrics, 'value_at_risk_5pct', 0):.1%}
+
+"""
+    
+    forecast_data = results.get('forecast_data')
+    if forecast_data:
+        report += f"""FORECASTS
+---------
+Ensemble Forecast: ${getattr(forecast_data, 'ensemble_forecast', 0):.2f}
+Confidence: {getattr(forecast_data, 'forecast_confidence', 0.5):.1%}
+Upside Probability: {getattr(forecast_data, 'upside_probability', 0.5):.1%}
+
+"""
+    
+    recommendation = results.get('recommendation')
+    if recommendation:
+        report += f"""AI RECOMMENDATION
+-----------------
+Action: {getattr(recommendation, 'action', 'HOLD')}
+Confidence: {getattr(recommendation, 'confidence', 0.5):.1%}
+Position Size: {getattr(recommendation, 'position_size', 0):.1%}
+Risk Level: {getattr(recommendation, 'risk_level', 'MEDIUM')}
+Risk/Reward Ratio: {getattr(recommendation, 'risk_reward_ratio', 1.0):.2f}
+
+"""
+    
+    financial_plan = results.get('financial_plan')
+    if financial_plan:
+        report += f"""FINANCIAL PLANNING
+------------------
+Success Probability: {getattr(financial_plan, 'success_probability', 0):.1%}
+Projected Value: ${getattr(financial_plan, 'projected_value', 0):,.0f}
+Plan Sharpe Ratio: {getattr(financial_plan, 'plan_sharpe_ratio', 0):.2f}
+Required Monthly: ${getattr(financial_plan, 'required_monthly', 0):,.0f}
+
+"""
+    
+    report += """
+DISCLAIMER
+----------
+This analysis is for informational purposes only and should not be considered as financial advice.
+Always consult with a qualified financial advisor before making investment decisions.
+Past performance does not guarantee future results.
+"""
+    
+    return report
+
+# Show system status on startup
+if PIPELINE_LOADED:
+    st.sidebar.success("🚀 AI Pipeline Ready")
+    st.sidebar.markdown("**Available Agents:**")
+    agents = [
+        "📊 Market Data Agent",
+        "⚠️ Risk Analysis Agent", 
+        "🔮 Forecasting Agent",
+        "🌍 Macro Economic Agent",
+        "😊 Sentiment Agent",
+        "🧠 AI Strategist Agent",
+        "💰 Financial Planner Agent"
+    ]
+    for agent in agents:
+        st.sidebar.markdown(f"✅ {agent}")
+    
+    # Show async status
+    if NEST_ASYNCIO_AVAILABLE:
+        st.sidebar.success("🔄 Async Support: Available")
+    else:
+        st.sidebar.warning("🔄 Async Support: Limited")
+        
+    # Show plotting status
+    if PLOTLY_AVAILABLE:
+        st.sidebar.success("📊 Interactive Charts: Available")
+    else:
+        st.sidebar.warning("📊 Interactive Charts: Basic only")
+        
+else:
+    st.sidebar.error("❌ Pipeline Not Loaded")
+    st.sidebar.markdown("**Setup Required:**")
+    st.sidebar.markdown("1. Install dependencies")
+    st.sidebar.markdown("2. Add final_vCM.py file")
+    st.sidebar.markdown("3. Restart app")
+
+# Footer
+st.markdown("---")
+st.markdown("""
+<div style="text-align: center; color: #666; padding: 2rem;">
+    <p>🤖 Powered by Multi-Agent AI Architecture | Built with Streamlit</p>
+    <p>⚠️ For educational purposes only. Not financial advice.</p>
+</div>
+""", unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
