@@ -9,6 +9,19 @@ Original file is located at
 
 #!pip install fredapi newsapi-python textblob praw nest-asyncio -q
 
+# --- Colab compatibility guard ---
+try:
+    from google.colab import files as _colab_files, drive as _colab_drive  # type: ignore
+    IN_COLAB = True
+except Exception:
+    _colab_files = None
+    _colab_drive = None
+    IN_COLAB = False
+
+# expose names expected by the rest of the code
+files = _colab_files
+drive = _colab_drive
+
 import asyncio
 import praw
 import yfinance as yf
