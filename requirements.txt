@@ -1,7 +1,11 @@
 streamlit
+nest-asyncio
+plotly
+yfinance
 pandas
 numpy
-mlxtend
 matplotlib
-seaborn
-networkx
+fredapi
+newsapi-python
+textblob
+praw
