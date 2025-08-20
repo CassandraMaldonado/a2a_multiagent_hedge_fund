@@ -2541,7 +2541,7 @@ goal = FinancialGoal(
 )
 results = await run_pipeline_sync('TSLA', financial_goal=goal)
 
-!pip install nest_asyncio
+#!pip install nest_asyncio
 
 results = run_complete_analysis("AAPL")
 
