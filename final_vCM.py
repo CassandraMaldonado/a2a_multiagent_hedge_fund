@@ -2530,15 +2530,6 @@ if __name__ == "__main__":
 # Basic AAPL analysis.
 #results = await run_pipeline_sync('AAPL')
 
-# With financial planning.
-#goal = FinancialGoal(
-    target_amount=1000000,
-    current_amount=50000,
-    monthly_contribution=2000,
-    time_horizon_years=25,
-    risk_tolerance='moderate',
-    age=35
-)
 #results = await run_pipeline_sync('TSLA', financial_goal=goal)
 
 #!pip install nest_asyncio
