@@ -2549,14 +2549,14 @@ if __name__ == "__main__":
 
 # Goal.
 #my_goal = FinancialGoal(
-    target_amount=1000000,
-    current_amount=50000,
-    monthly_contribution=2000,
-    time_horizon_years=25,
-    risk_tolerance="moderate",
-    age=35,
-    annual_income=120000,
-    goal_type="retirement"
+    #target_amount=1000000,
+    #current_amount=50000,
+    #monthly_contribution=2000,
+    #time_horizon_years=25,
+    #risk_tolerance="moderate",
+    #age=35,
+    #annual_income=120000,
+    #goal_type="retirement"
 )
 
 #results = await run_pipeline_sync('AAPL', financial_goal=my_goal)
