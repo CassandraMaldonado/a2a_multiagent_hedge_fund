@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1H8VN8UiD6twib-cTBlpCFgbi16RTI3h0
 """
 
-!pip install fredapi newsapi-python textblob praw nest-asyncio -q
+#!pip install fredapi newsapi-python textblob praw nest-asyncio -q
 
 import asyncio
 import praw
