@@ -11,9 +11,6 @@ import json
 import asyncio
 import nest_asyncio
 
-# Apply nest_asyncio to handle async in Streamlit
-nest_asyncio.apply()
-
 # Configure Streamlit page
 st.set_page_config(
     page_title="🤖 AI Financial Forecasting",
@@ -22,7 +19,30 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Import everything from your final_vCM.py
+# Handle optional imports gracefully
+NEST_ASYNCIO_AVAILABLE = False
+PLOTLY_AVAILABLE = False
+PIPELINE_LOADED = False
+
+# Try importing nest_asyncio
+try:
+    import nest_asyncio
+    nest_asyncio.apply()
+    NEST_ASYNCIO_AVAILABLE = True
+except ImportError:
+    st.warning("⚠️ nest_asyncio not available. Some async features may be limited.")
+    st.info("💡 Install with: `pip install nest-asyncio`")
+
+# Try importing Plotly for charts
+try:
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    st.warning("⚠️ Plotly not available. Charts will be basic.")
+    st.info("💡 Install with: `pip install plotly`")
+
+# Try importing your final_vCM.py
 try:
     from final_vCM import *
     PIPELINE_LOADED = True
@@ -31,16 +51,35 @@ except ImportError as e:
     st.error(f"❌ Could not import final_vCM.py: {e}")
     st.error("Please ensure final_vCM.py is in the same directory")
     PIPELINE_LOADED = False
-    st.stop()
+except Exception as e:
+    st.error(f"❌ Error loading AI pipeline: {e}")
+    PIPELINE_LOADED = False
 
-# Import Plotly for charts
-try:
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-    PLOTLY_AVAILABLE = True
-except ImportError:
-    st.warning("⚠️ Plotly not available. Install with: pip install plotly")
-    PLOTLY_AVAILABLE = False
+# Show installation instructions if needed
+if not PIPELINE_LOADED or not NEST_ASYNCIO_AVAILABLE or not PLOTLY_AVAILABLE:
+    with st.expander("📦 Installation Instructions", expanded=True):
+        st.markdown("### Required Dependencies")
+        
+        missing_deps = []
+        if not NEST_ASYNCIO_AVAILABLE:
+            missing_deps.append("nest-asyncio")
+        if not PLOTLY_AVAILABLE:
+            missing_deps.append("plotly")
+        
+        if missing_deps:
+            st.code(f"pip install {' '.join(missing_deps)}")
+        
+        if not PIPELINE_LOADED:
+            st.markdown("### AI Pipeline Setup")
+            st.markdown("1. Ensure `final_vCM.py` is in the same directory as this app")
+            st.markdown("2. Install required dependencies for the pipeline:")
+            st.code("""pip install yfinance pandas numpy matplotlib plotly fredapi newsapi-python textblob praw nest-asyncio""")
+        
+        st.markdown("3. Restart the Streamlit app after installation")
+
+# Stop execution if critical components are missing
+if not PIPELINE_LOADED:
+    st.stop()
 
 # Custom CSS for beautiful styling
 st.markdown("""
@@ -117,29 +156,44 @@ st.markdown("""
 def run_analysis_pipeline(symbol, openai_key=None, financial_goal=None):
     """Run the complete AI analysis pipeline"""
     try:
-        # Use the async pipeline from final_vCM.py
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+        if not PIPELINE_LOADED:
+            st.error("❌ AI Pipeline not loaded")
+            return None
         
+        # Try async pipeline if nest_asyncio is available
+        if NEST_ASYNCIO_AVAILABLE:
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                
+                try:
+                    result = loop.run_until_complete(
+                        run_pipeline_with_real_apis(
+                            symbol=symbol,
+                            openai_api_key=openai_key,
+                            financial_goal=financial_goal
+                        )
+                    )
+                    return result
+                finally:
+                    loop.close()
+            except Exception as e:
+                st.warning(f"Async pipeline failed: {e}. Trying sync version...")
+        
+        # Fallback to sync version
         try:
-            result = loop.run_until_complete(
-                run_pipeline_with_real_apis(
-                    symbol=symbol,
-                    openai_api_key=openai_key,
-                    financial_goal=financial_goal
-                )
-            )
-            return result
-        finally:
-            loop.close()
+            if 'run_complete_analysis' in globals():
+                return run_complete_analysis(symbol)
+            else:
+                st.error("❌ No analysis functions available")
+                return None
+        except Exception as e:
+            st.error(f"Sync analysis failed: {e}")
+            return None
             
     except Exception as e:
         st.error(f"Pipeline error: {e}")
-        # Fallback to sync version
-        try:
-            return run_complete_analysis(symbol)
-        except:
-            return None
+        return None
 
 def main():
     """Main Streamlit Application"""
@@ -942,8 +996,25 @@ if PIPELINE_LOADED:
     ]
     for agent in agents:
         st.sidebar.markdown(f"✅ {agent}")
+    
+    # Show async status
+    if NEST_ASYNCIO_AVAILABLE:
+        st.sidebar.success("🔄 Async Support: Available")
+    else:
+        st.sidebar.warning("🔄 Async Support: Limited")
+        
+    # Show plotting status
+    if PLOTLY_AVAILABLE:
+        st.sidebar.success("📊 Interactive Charts: Available")
+    else:
+        st.sidebar.warning("📊 Interactive Charts: Basic only")
+        
 else:
     st.sidebar.error("❌ Pipeline Not Loaded")
+    st.sidebar.markdown("**Setup Required:**")
+    st.sidebar.markdown("1. Install dependencies")
+    st.sidebar.markdown("2. Add final_vCM.py file")
+    st.sidebar.markdown("3. Restart app")
 
 # Footer
 st.markdown("---")
