@@ -19,7 +19,7 @@ st.set_page_config(
 # Import your financial system
 try:
     # Import directly from Final_pls module (adjust path as needed)
-    from Final_pls import (
+    from Final_vCM import (
         MarketDataAgent, RiskAgent, ForecastingAgent, MacroEconomicAgent,
         SentimentAgent, StrategistAgent, FinancialPlannerAgent,
         FinancialGoal, run_pipeline_with_real_apis, print_pipeline_summary,
