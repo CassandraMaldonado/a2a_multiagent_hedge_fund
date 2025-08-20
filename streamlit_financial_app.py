@@ -361,7 +361,6 @@ def run_manual_pipeline_sync(symbol, openai_key, financial_goal):
     return asyncio.run(_async_manual_pipeline())
 
 async def run_manual_pipeline(symbol, openai_key, financial_goal):
-async def run_manual_pipeline(symbol, openai_key, financial_goal):
     """
     Manual pipeline execution as fallback if main pipeline functions aren't available
     """
