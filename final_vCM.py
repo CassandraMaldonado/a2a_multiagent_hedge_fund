@@ -2557,6 +2557,6 @@ if __name__ == "__main__":
     #age=35,
     #annual_income=120000,
     #goal_type="retirement"
-)
+#)
 
 #results = await run_pipeline_sync('AAPL', financial_goal=my_goal)
