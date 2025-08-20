@@ -9,4 +9,3 @@ fredapi
 newsapi-python
 textblob
 praw
-pip install fake-google-colab
