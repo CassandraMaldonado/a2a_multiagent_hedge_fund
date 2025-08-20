@@ -79,21 +79,3 @@ This is still a work-in-progress, but I’ve learned a lot about:
 2. Add your API keys in a `.env` file or use Colab secrets
 3. Run each agent step by step or orchestrate as a pipeline
 4. Streamlit app coming soon
-
----
-
-## Credits
-
-This project is inspired by:
-- [virattt/ai-hedge-fund](https://github.com/virattt/ai-hedge-fund)
-- Class lectures from **Dr. Utku Pamuksuz** (University of Chicago)
-- Open-source ML tools, APIs, and GPT
-
----
-
-## Built By
-
-Cassandra Maldonado  
-M.S. in Applied Data Science  
-University of Chicago  
-2025  
