@@ -1,3 +1,8 @@
+"""
+AI FINANCIAL FORECASTING SYSTEM - STREAMLIT APP
+Complete web interface for the multi-agent financial analysis pipeline
+"""
+
 import streamlit as st
 import asyncio
 import pandas as pd
@@ -5,915 +10,2295 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
-import sys
-import os
+import yfinance as yf
+import warnings
+warnings.filterwarnings('ignore')
 
-# Page config
+# Remove Colab-specific imports and replace with Streamlit environment
+import asyncio
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from datetime import datetime, timedelta
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Any, Tuple
+import requests
+import warnings
+import os
+import json
+import re
+warnings.filterwarnings('ignore')
+
+# Optional imports with graceful fallbacks
+try:
+    import praw
+    HAS_PRAW = True
+except ImportError:
+    HAS_PRAW = False
+    praw = None
+
+try:
+    from fredapi import Fred
+    HAS_FRED = True
+except ImportError:
+    HAS_FRED = False
+    Fred = None
+
+try:
+    from newsapi.newsapi_client import NewsApiClient
+    HAS_NEWSAPI = True
+except ImportError:
+    HAS_NEWSAPI = False
+    NewsApiClient = None
+
+try:
+    import nest_asyncio
+    HAS_NEST_ASYNCIO = True
+except ImportError:
+    HAS_NEST_ASYNCIO = False
+
+try:
+    from textblob import TextBlob
+    HAS_TEXTBLOB = True
+except ImportError:
+    HAS_TEXTBLOB = False
+    TextBlob = None
+
+try:
+    from prophet import Prophet
+    HAS_PROPHET = True
+except ImportError:
+    HAS_PROPHET = False
+
+try:
+    from openai import OpenAI
+    HAS_OPENAI = True
+except ImportError:
+    HAS_OPENAI = False
+
+# Data structures
+@dataclass
+class MarketData:
+    symbol: str
+    current_price: float
+    prices: pd.Series
+    volume: pd.Series = field(default_factory=pd.Series)
+
+    # Technical indicators
+    rsi: float = 50.0
+    trend: str = "neutral"
+    return_1d: float = 0.0
+    return_5d: float = 0.0
+    return_20d: float = 0.0
+    volatility_20d: float = 0.0
+    support_level: float = 0.0
+    resistance_level: float = 0.0
+
+    macd_signal: str = "neutral"
+    bollinger_position: str = "middle"
+    volume_trend: str = "neutral"
+
+    last_updated: datetime = field(default_factory=datetime.now)
+
+@dataclass
+class ForecastData:
+    arima_forecast: float = 0.0
+    prophet_forecast: float = 0.0
+    lstm_forecast: float = 0.0
+    ensemble_forecast: float = 0.0
+    forecast_confidence: float = 0.5
+    prediction_interval: List[float] = field(default_factory=lambda: [0.0, 0.0])
+    forecast_horizon_days: int = 5
+    forecast_accuracy_score: float = 0.0
+
+    upside_probability: float = 0.5
+    downside_risk: float = 0.5
+    volatility_forecast: float = 0.2
+    simulated_returns: List[float] = field(default_factory=list)
+
+    last_updated: datetime = field(default_factory=datetime.now)
+
+@dataclass
+class MacroData:
+    gdp_growth: float = 0.0
+    inflation_rate: float = 0.0
+    unemployment_rate: float = 0.0
+    federal_funds_rate: float = 0.0
+    vix: float = 0.0
+    dollar_index: float = 0.0
+    market_sentiment: str = "neutral"
+
+    yield_curve_slope: float = 0.0
+    credit_spreads: float = 0.0
+    economic_surprise_index: float = 0.0
+
+    last_updated: datetime = field(default_factory=datetime.now)
+
+@dataclass
+class SentimentData:
+    news_sentiment: float = 0.0
+    social_media_sentiment: float = 0.0
+    overall_sentiment: float = 0.0
+    sentiment_trend: str = "neutral"
+    confidence_score: float = 0.5
+    key_topics: List[str] = field(default_factory=list)
+
+    sentiment_momentum: float = 0.0
+    fear_greed_index: float = 50.0
+    analyst_rating_trend: str = "neutral"
+
+    last_updated: datetime = field(default_factory=datetime.now)
+
+@dataclass
+class RiskMetrics:
+    portfolio_volatility: float = 0.0
+    value_at_risk_5pct: float = 0.0
+    value_at_risk_1pct: float = 0.0
+    expected_shortfall: float = 0.0
+    maximum_drawdown: float = 0.0
+    sharpe_ratio: float = 0.0
+    sortino_ratio: float = 0.0
+    calmar_ratio: float = 0.0
+
+    garch_volatility: float = 0.0
+    garch_forecast: List[float] = field(default_factory=list)
+
+    rolling_volatility: pd.Series = field(default_factory=pd.Series)
+    rolling_sharpe: pd.Series = field(default_factory=pd.Series)
+
+    drawdown_series: pd.Series = field(default_factory=pd.Series)
+    drawdown_periods: List[Dict] = field(default_factory=list)
+
+    last_updated: datetime = field(default_factory=datetime.now)
+
+@dataclass
+class PersonalizedRecommendation:
+    action: str
+    confidence: float
+    position_size: float
+    entry_price: float
+    stop_loss: float
+    take_profit: float
+    risk_level: str
+    time_horizon: str
+
+    detailed_reasoning: str
+    key_risk_factors: List[str]
+    key_opportunity_factors: List[str]
+    alternative_scenarios: Dict[str, str]
+    portfolio_impact: str
+    market_timing_analysis: str
+
+    risk_reward_ratio: float
+    probability_of_success: float
+    maximum_drawdown_estimate: float
+
+    last_updated: datetime = field(default_factory=datetime.now)
+
+@dataclass
+class FinancialGoal:
+    target_amount: float
+    current_amount: float
+    monthly_contribution: float
+    time_horizon_years: int
+    risk_tolerance: str
+    age: int = 30
+    annual_income: float = 100000
+
+    goal_type: str = "retirement"
+    existing_debt: float = 0.0
+    emergency_fund: float = 0.0
+    other_investments: float = 0.0
+    tax_rate: float = 0.22
+    inflation_assumption: float = 0.03
+
+@dataclass
+class FinancialPlanResult:
+    goal: FinancialGoal
+    projected_value: float
+    success_probability: float
+    required_monthly: float
+    asset_allocation: Dict[str, float]
+    tax_optimization: Dict[str, float]
+    monthly_breakdown: Dict[str, float]
+    recommendations: List[str]
+    is_achievable: bool
+    monte_carlo_results: Dict[str, float]
+
+    plan_sharpe_ratio: float = 0.0
+    plan_max_drawdown: float = 0.0
+    plan_volatility: float = 0.0
+
+    last_updated: datetime = field(default_factory=datetime.now)
+
+# Market data agent
+class MarketDataAgent:
+    def __init__(self):
+        self.name = "MarketDataAgent"
+
+    async def process(self, state: Dict, symbol: str = "AAPL", period: str = "1y") -> Dict:
+        try:
+            st.write(f"📊 {self.name}: Fetching market data for {symbol}...")
+
+            ticker = yf.Ticker(symbol)
+            data = ticker.history(period=period)
+
+            if data.empty:
+                raise ValueError(f"No data available for {symbol}")
+
+            current_price = float(data['Close'].iloc[-1])
+            prices = data['Close']
+            volume = data['Volume']
+
+            returns = prices.pct_change()
+            return_1d = float(returns.iloc[-1]) if len(returns) > 0 else 0.0
+            return_5d = float(returns.tail(5).mean()) if len(returns) >= 5 else 0.0
+            return_20d = float(returns.tail(20).mean()) if len(returns) >= 20 else 0.0
+            volatility_20d = float(returns.tail(20).std() * np.sqrt(252)) if len(returns) >= 20 else 0.0
+
+            rsi = self._calculate_rsi(prices)
+            trend = self._analyze_trend(prices)
+            macd_signal = self._calculate_macd_signal(prices)
+            bollinger_position = self._calculate_bollinger_position(prices)
+            volume_trend = self._analyze_volume_trend(volume)
+
+            high_20 = prices.tail(20).max()
+            low_20 = prices.tail(20).min()
+            support_level = float(low_20 * 1.02)
+            resistance_level = float(high_20 * 0.98)
+
+            market_data = MarketData(
+                symbol=symbol,
+                current_price=current_price,
+                prices=prices,
+                volume=volume,
+                rsi=rsi,
+                trend=trend,
+                return_1d=return_1d,
+                return_5d=return_5d,
+                return_20d=return_20d,
+                volatility_20d=volatility_20d,
+                support_level=support_level,
+                resistance_level=resistance_level,
+                macd_signal=macd_signal,
+                bollinger_position=bollinger_position,
+                volume_trend=volume_trend
+            )
+
+            state['market_data'] = market_data
+            state['symbol'] = symbol
+
+            st.write(f"✅ {self.name}: Loaded {len(prices)} data points")
+
+        except Exception as e:
+            st.error(f"❌ {self.name}: Error - {e}")
+
+        return state
+
+    def _calculate_rsi(self, prices: pd.Series, period: int = 14) -> float:
+        if len(prices) < period + 1:
+            return 50.0
+
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return float(rsi.iloc[-1]) if not np.isnan(rsi.iloc[-1]) else 50.0
+
+    def _analyze_trend(self, prices: pd.Series) -> str:
+        if len(prices) < 20:
+            return "neutral"
+
+        ma_5 = prices.tail(5).mean()
+        ma_10 = prices.tail(10).mean()
+        ma_20 = prices.tail(20).mean()
+
+        if ma_5 > ma_10 > ma_20:
+            return "strongly_bullish"
+        elif ma_5 > ma_20 * 1.02:
+            return "bullish"
+        elif ma_5 < ma_10 < ma_20:
+            return "strongly_bearish"
+        elif ma_5 < ma_20 * 0.98:
+            return "bearish"
+        else:
+            return "neutral"
+
+    def _calculate_macd_signal(self, prices: pd.Series) -> str:
+        if len(prices) < 26:
+            return "neutral"
+
+        exp1 = prices.ewm(span=12).mean()
+        exp2 = prices.ewm(span=26).mean()
+        macd = exp1 - exp2
+        signal = macd.ewm(span=9).mean()
+
+        if macd.iloc[-1] > signal.iloc[-1]:
+            return "bullish"
+        elif macd.iloc[-1] < signal.iloc[-1]:
+            return "bearish"
+        else:
+            return "neutral"
+
+    def _calculate_bollinger_position(self, prices: pd.Series, period: int = 20) -> str:
+        if len(prices) < period:
+            return "middle"
+
+        sma = prices.rolling(window=period).mean()
+        std = prices.rolling(window=period).std()
+
+        upper_band = sma + (std * 2)
+        lower_band = sma - (std * 2)
+
+        current_price = prices.iloc[-1]
+        current_upper = upper_band.iloc[-1]
+        current_lower = lower_band.iloc[-1]
+        current_middle = sma.iloc[-1]
+
+        if current_price > current_upper:
+            return "above_upper"
+        elif current_price < current_lower:
+            return "below_lower"
+        elif current_price > current_middle:
+            return "upper_half"
+        else:
+            return "lower_half"
+
+    def _analyze_volume_trend(self, volume: pd.Series) -> str:
+        if len(volume) < 10:
+            return "neutral"
+
+        recent_volume = volume.tail(5).mean()
+        historical_volume = volume.tail(20).mean()
+
+        if recent_volume > historical_volume * 1.2:
+            return "increasing"
+        elif recent_volume < historical_volume * 0.8:
+            return "decreasing"
+        else:
+            return "stable"
+
+# Risk analysis agent
+class RiskAgent:
+    def __init__(self):
+        self.name = "RiskAgent"
+
+    async def process(self, state: Dict) -> Dict:
+        try:
+            st.write(f"⚠️ {self.name}: Computing portfolio risk metrics...")
+
+            if 'market_data' not in state or not state['market_data']:
+                st.warning(f"{self.name}: No market data available.")
+                return state
+
+            market_data = state['market_data']
+            prices = market_data.prices
+
+            if len(prices) < 30:
+                st.warning(f"{self.name}: Insufficient data for risk analysis.")
+                return state
+
+            returns = prices.pct_change().dropna()
+
+            portfolio_volatility = float(returns.std() * np.sqrt(252))
+            var_5pct = float(np.percentile(returns, 5))
+            var_1pct = float(np.percentile(returns, 1))
+            expected_shortfall = float(returns[returns <= var_5pct].mean())
+
+            cumulative_returns = (1 + returns).cumprod()
+            running_max = cumulative_returns.expanding().max()
+            drawdown = (cumulative_returns - running_max) / running_max
+            maximum_drawdown = float(drawdown.min())
+
+            risk_free_rate = 0.02
+            excess_returns = returns.mean() * 252 - risk_free_rate
+            sharpe_ratio = float(excess_returns / portfolio_volatility) if portfolio_volatility > 0 else 0.0
+
+            downside_returns = returns[returns < 0]
+            downside_deviation = float(downside_returns.std() * np.sqrt(252)) if len(downside_returns) > 0 else portfolio_volatility
+            sortino_ratio = float(excess_returns / downside_deviation) if downside_deviation > 0 else 0.0
+
+            annual_return = float(returns.mean() * 252)
+            calmar_ratio = float(annual_return / abs(maximum_drawdown)) if maximum_drawdown != 0 else 0.0
+
+            garch_volatility = self._calculate_garch_volatility(returns)
+            garch_forecast = self._forecast_garch_volatility(returns, horizon=5)
+
+            rolling_vol = returns.rolling(window=20).std() * np.sqrt(252)
+            rolling_sharpe = self._calculate_rolling_sharpe(returns, window=60)
+
+            drawdown_periods = self._analyze_drawdown_periods(drawdown)
+
+            risk_metrics = RiskMetrics(
+                portfolio_volatility=portfolio_volatility,
+                value_at_risk_5pct=var_5pct,
+                value_at_risk_1pct=var_1pct,
+                expected_shortfall=expected_shortfall,
+                maximum_drawdown=maximum_drawdown,
+                sharpe_ratio=sharpe_ratio,
+                sortino_ratio=sortino_ratio,
+                calmar_ratio=calmar_ratio,
+                garch_volatility=garch_volatility,
+                garch_forecast=garch_forecast,
+                rolling_volatility=rolling_vol,
+                rolling_sharpe=rolling_sharpe,
+                drawdown_series=drawdown,
+                drawdown_periods=drawdown_periods
+            )
+
+            state['risk_metrics'] = risk_metrics
+
+            st.write(f"✅ {self.name}: Risk analysis complete")
+
+        except Exception as e:
+            st.error(f"❌ {self.name}: Error - {e}")
+
+        return state
+
+    def _calculate_garch_volatility(self, returns: pd.Series) -> float:
+        try:
+            lambda_param = 0.94
+            squared_returns = returns ** 2
+            ewma_variance = squared_returns.ewm(alpha=1-lambda_param).mean()
+            return float(np.sqrt(ewma_variance.iloc[-1] * 252))
+        except Exception:
+            return float(returns.rolling(window=20).std().iloc[-1] * np.sqrt(252))
+
+    def _forecast_garch_volatility(self, returns: pd.Series, horizon: int = 5) -> List[float]:
+        try:
+            current_vol = self._calculate_garch_volatility(returns)
+            long_term_vol = float(returns.std() * np.sqrt(252))
+            
+            forecasts = []
+            decay_rate = 0.05
+
+            for i in range(horizon):
+                forecast_vol = current_vol * (1 - decay_rate * i) + long_term_vol * (decay_rate * i)
+                forecasts.append(forecast_vol)
+
+            return forecasts
+        except Exception:
+            vol = float(returns.std() * np.sqrt(252))
+            return [vol] * horizon
+
+    def _calculate_rolling_sharpe(self, returns: pd.Series, window: int = 60) -> pd.Series:
+        try:
+            risk_free_rate = 0.02 / 252
+            rolling_mean = returns.rolling(window=window).mean()
+            rolling_std = returns.rolling(window=window).std()
+            rolling_sharpe = (rolling_mean - risk_free_rate) / rolling_std * np.sqrt(252)
+            return rolling_sharpe
+        except Exception:
+            return pd.Series(index=returns.index, data=0.0)
+
+    def _analyze_drawdown_periods(self, drawdown: pd.Series) -> List[Dict]:
+        try:
+            drawdown_periods = []
+            in_drawdown = drawdown < -0.01
+
+            if not in_drawdown.any():
+                return drawdown_periods
+
+            drawdown_changes = in_drawdown.diff()
+            starts = drawdown_changes[drawdown_changes == True].index
+            ends = drawdown_changes[drawdown_changes == False].index
+
+            if in_drawdown.iloc[0]:
+                starts = [drawdown.index[0]] + list(starts)
+            if in_drawdown.iloc[-1]:
+                ends = list(ends) + [drawdown.index[-1]]
+
+            for start, end in zip(starts, ends):
+                period_drawdown = drawdown.loc[start:end]
+                max_dd = period_drawdown.min()
+                duration = len(period_drawdown)
+
+                drawdown_periods.append({
+                    'start_date': start,
+                    'end_date': end,
+                    'duration_days': duration,
+                    'max_drawdown': float(max_dd),
+                    'recovery_time': 0
+                })
+
+            return drawdown_periods[:5]
+        except Exception:
+            return []
+
+# Forecasting Agent
+class ForecastingAgent:
+    def __init__(self):
+        self.name = "ForecastingAgent"
+
+    async def process(self, state: Dict, forecast_horizon: int = 5) -> Dict:
+        if 'market_data' not in state or not state['market_data']:
+            st.warning(f"{self.name}: No market data available.")
+            return state
+
+        try:
+            st.write(f"🔮 {self.name}: Generating forecasts...")
+
+            market_data = state['market_data']
+            prices = market_data.prices
+            current_price = market_data.current_price
+
+            arima_forecast = self._arima_forecast(prices, current_price)
+            prophet_forecast = self._prophet_forecast(prices, forecast_horizon)
+            lstm_forecast = self._lstm_forecast(prices, current_price)
+
+            ensemble_forecast = np.mean([arima_forecast, prophet_forecast, lstm_forecast])
+
+            forecast_std = np.std([arima_forecast, prophet_forecast, lstm_forecast])
+            volatility = market_data.volatility_20d
+            confidence = max(0.3, min(0.9, 1.0 - (forecast_std / current_price) - volatility * 0.5))
+
+            lower_bound = ensemble_forecast - 1.96 * forecast_std
+            upper_bound = ensemble_forecast + 1.96 * forecast_std
+
+            simulated_returns = self._generate_simulated_returns(prices, forecast_horizon)
+
+            expected_return = (ensemble_forecast - current_price) / current_price
+            upside_probability = max(0.1, min(0.9, 0.5 + expected_return))
+            downside_risk = 1.0 - upside_probability
+
+            volatility_forecast = self._forecast_volatility(prices)
+            trend_consistency = self._calculate_trend_consistency(prices)
+            accuracy_score = confidence * trend_consistency
+
+            forecast_data = ForecastData(
+                arima_forecast=arima_forecast,
+                prophet_forecast=prophet_forecast,
+                lstm_forecast=lstm_forecast,
+                ensemble_forecast=ensemble_forecast,
+                forecast_confidence=confidence,
+                prediction_interval=[lower_bound, upper_bound],
+                forecast_horizon_days=forecast_horizon,
+                forecast_accuracy_score=accuracy_score,
+                upside_probability=upside_probability,
+                downside_risk=downside_risk,
+                volatility_forecast=volatility_forecast,
+                simulated_returns=simulated_returns
+            )
+
+            state['forecast_data'] = forecast_data
+
+            st.write(f"✅ {self.name}: Forecasts generated")
+
+        except Exception as e:
+            st.error(f"❌ {self.name}: Error - {e}")
+
+        return state
+
+    def _arima_forecast(self, prices: pd.Series, current_price: float) -> float:
+        if len(prices) >= 20:
+            ma_5 = prices.tail(5).mean()
+            ma_20 = prices.tail(20).mean()
+            trend_factor = (ma_5 - ma_20) / ma_20
+            momentum = (prices.iloc[-1] - prices.iloc[-5]) / prices.iloc[-5]
+            return current_price * (1 + trend_factor * 0.5 + momentum * 0.3)
+        return current_price * 1.01
+
+    def _prophet_forecast(self, prices: pd.Series, horizon: int) -> float:
+        if HAS_PROPHET and len(prices) >= 30:
+            try:
+                df = pd.DataFrame({
+                    'ds': prices.index,
+                    'y': prices.values
+                })
+
+                model = Prophet(
+                    daily_seasonality=True,
+                    yearly_seasonality=False,
+                    weekly_seasonality=True,
+                    changepoint_prior_scale=0.05
+                )
+                model.fit(df)
+
+                future = model.make_future_dataframe(periods=horizon)
+                forecast = model.predict(future)
+
+                return float(forecast['yhat'].iloc[-1])
+            except:
+                pass
+
+        if len(prices) >= 7:
+            seasonal_factor = 1.0 + np.random.normal(0, 0.01)
+            return prices.iloc[-1] * seasonal_factor * (1 + np.random.normal(0.02, 0.05))
+
+        return prices.iloc[-1] * (1 + np.random.normal(0.02, 0.05))
+
+    def _lstm_forecast(self, prices: pd.Series, current_price: float) -> float:
+        if len(prices) >= 20:
+            weights_short = np.exp(np.linspace(-2, 0, 5))
+            weights_short = weights_short / weights_short.sum()
+
+            weights_long = np.exp(np.linspace(-3, 0, 15))
+            weights_long = weights_long / weights_long.sum()
+
+            short_term = np.sum(prices.tail(5) * weights_short)
+            long_term = np.sum(prices.tail(15) * weights_long)
+
+            volatility = prices.pct_change().tail(20).std()
+            noise = np.random.normal(0, volatility * 0.1)
+
+            return (short_term * 0.7 + long_term * 0.3) * (1 + noise)
+
+        return current_price * (1 + np.random.normal(0.02, 0.05))
+
+    def _generate_simulated_returns(self, prices: pd.Series, horizon: int) -> List[float]:
+        returns = prices.pct_change().dropna()
+
+        if len(returns) < 20:
+            mean_return = 0.001
+            std_return = 0.02
+        else:
+            mean_return = returns.mean()
+            std_return = returns.std()
+
+        simulated_returns = np.random.normal(mean_return, std_return, horizon * 50).tolist()
+        return simulated_returns
+
+    def _forecast_volatility(self, prices: pd.Series) -> float:
+        returns = prices.pct_change().dropna()
+        if len(returns) < 20:
+            return 0.2
+
+        recent_vol = returns.tail(10).std() * np.sqrt(252)
+        long_term_vol = returns.std() * np.sqrt(252)
+
+        forecast_vol = 0.7 * recent_vol + 0.3 * long_term_vol
+        return min(1.0, max(0.05, forecast_vol))
+
+    def _calculate_trend_consistency(self, prices: pd.Series) -> float:
+        if len(prices) < 10:
+            return 0.5
+
+        x = np.arange(len(prices.tail(20)))
+        y = prices.tail(20).values
+
+        try:
+            correlation = np.corrcoef(x, y)[0, 1]
+            r_squared = correlation ** 2
+            return min(1.0, r_squared + 0.3)
+        except:
+            return 0.5
+
+# Macro Economic agent
+class MacroEconomicAgent:
+    def __init__(self, fred_api_key=None):
+        self.name = "MacroEconomicAgent"
+        self.fred_api_key = fred_api_key
+
+        if self.fred_api_key and HAS_FRED:
+            self.fred = Fred(api_key=self.fred_api_key)
+            st.write(f"✅ {self.name} initialized with FRED API")
+        else:
+            self.fred = None
+            st.write(f"⚠️ {self.name} using simulated data (no FRED API key)")
+
+    async def process(self, state: Dict) -> Dict:
+        try:
+            st.write(f"🌍 {self.name}: Fetching macro-economic data...")
+
+            if self.fred and HAS_FRED:
+                try:
+                    gdp_data = self.fred.get_series('GDP', limit=2)
+                    gdp_growth = ((gdp_data.iloc[-1] / gdp_data.iloc[-2]) - 1) * 100
+
+                    cpi_data = self.fred.get_series('CPIAUCSL', limit=13)
+                    inflation_rate = ((cpi_data.iloc[-1] / cpi_data.iloc[-13]) - 1) * 100
+
+                    unemployment_rate = self.fred.get_series('UNRATE', limit=1).iloc[-1]
+                    federal_funds_rate = self.fred.get_series('FEDFUNDS', limit=1).iloc[-1]
+
+                    try:
+                        vix = self.fred.get_series('VIXCLS', limit=1).iloc[-1]
+                    except:
+                        vix = 20.0
+
+                    try:
+                        dollar_index = self.fred.get_series('DTWEXBGS', limit=1).iloc[-1]
+                    except:
+                        dollar_index = 100.0
+
+                    try:
+                        ten_year = self.fred.get_series('GS10', limit=1).iloc[-1]
+                        two_year = self.fred.get_series('GS2', limit=1).iloc[-1]
+                        yield_curve_slope = ten_year - two_year
+                    except:
+                        yield_curve_slope = 1.0
+
+                    if inflation_rate < 3 and unemployment_rate < 5 and yield_curve_slope > 0:
+                        market_sentiment = "bullish"
+                    elif inflation_rate > 5 or unemployment_rate > 7 or yield_curve_slope < -0.5:
+                        market_sentiment = "bearish"
+                    else:
+                        market_sentiment = "neutral"
+
+                    st.write(f"✅ {self.name}: Real FRED data retrieved")
+
+                except Exception as e:
+                    st.warning(f"FRED API error: {e}, using simulated data")
+                    return self._get_simulated_data(state)
+
+            else:
+                return self._get_simulated_data(state)
+
+            macro_data = MacroData(
+                gdp_growth=float(gdp_growth),
+                inflation_rate=float(inflation_rate),
+                unemployment_rate=float(unemployment_rate),
+                federal_funds_rate=float(federal_funds_rate),
+                vix=float(vix),
+                dollar_index=float(dollar_index),
+                market_sentiment=market_sentiment,
+                yield_curve_slope=float(yield_curve_slope),
+                credit_spreads=1.2,
+                economic_surprise_index=0.0
+            )
+
+            state['macro_data'] = macro_data
+            st.write(f"✅ {self.name}: Analysis complete")
+
+        except Exception as e:
+            st.error(f"❌ {self.name}: Error - {e}")
+            return self._get_simulated_data(state)
+
+        return state
+
+    def _get_simulated_data(self, state):
+        macro_data = MacroData(
+            gdp_growth=np.random.normal(2.5, 0.5),
+            inflation_rate=np.random.normal(3.2, 0.3),
+            unemployment_rate=np.random.normal(3.8, 0.2),
+            federal_funds_rate=np.random.normal(5.25, 0.25),
+            vix=np.random.normal(18, 5),
+            dollar_index=np.random.normal(103, 2),
+            market_sentiment=np.random.choice(["bullish", "neutral", "bearish"], p=[0.3, 0.4, 0.3]),
+            yield_curve_slope=np.random.normal(1.5, 0.3),
+            credit_spreads=np.random.normal(1.2, 0.2),
+            economic_surprise_index=np.random.normal(0.0, 0.5)
+        )
+        state['macro_data'] = macro_data
+        return state
+
+# Sentiment agent
+class SentimentAgent:
+    def __init__(self, news_api_key=None, reddit_client_id=None, reddit_client_secret=None, reddit_user_agent=None):
+        self.name = "SentimentAgent"
+        self.news_api_key = news_api_key
+        self.reddit_client_id = reddit_client_id
+        self.reddit_client_secret = reddit_client_secret
+        self.reddit_user_agent = reddit_user_agent
+
+        if self.news_api_key and HAS_NEWSAPI:
+            self.newsapi = NewsApiClient(api_key=self.news_api_key)
+            st.write(f"✅ {self.name} initialized with News API")
+        else:
+            self.newsapi = None
+            st.write(f"⚠️ {self.name} using simulated news data")
+
+        if all([self.reddit_client_id, self.reddit_client_secret, self.reddit_user_agent]) and HAS_PRAW:
+            try:
+                self.reddit = praw.Reddit(
+                    client_id=self.reddit_client_id,
+                    client_secret=self.reddit_client_secret,
+                    user_agent=self.reddit_user_agent
+                )
+                st.write(f"✅ {self.name} initialized with Reddit API")
+            except Exception as e:
+                st.warning(f"Reddit API initialization failed: {e}")
+                self.reddit = None
+        else:
+            self.reddit = None
+            st.write(f"⚠️ {self.name} using simulated social media data")
+
+    async def process(self, state: Dict) -> Dict:
+        try:
+            st.write(f"💭 {self.name}: Analyzing sentiment...")
+
+            symbol = state.get('symbol', 'UNKNOWN')
+            company_name = self._get_company_name(symbol)
+
+            news_sentiment = await self._analyze_news_sentiment(symbol, company_name)
+            reddit_sentiment = await self._analyze_reddit_sentiment(symbol, company_name)
+
+            if news_sentiment is not None and reddit_sentiment is not None:
+                overall_sentiment = (news_sentiment * 0.6 + reddit_sentiment * 0.4)
+                confidence_score = 0.8
+            elif news_sentiment is not None:
+                overall_sentiment = news_sentiment
+                confidence_score = 0.6
+            elif reddit_sentiment is not None:
+                overall_sentiment = reddit_sentiment
+                confidence_score = 0.5
+            else:
+                overall_sentiment = np.random.normal(0.0, 0.3)
+                news_sentiment = np.random.normal(0.1, 0.3)
+                reddit_sentiment = np.random.normal(0.0, 0.4)
+                confidence_score = 0.3
+                st.warning("⚠️ Using simulated sentiment data")
+
+            if overall_sentiment > 0.2:
+                sentiment_trend = "positive"
+            elif overall_sentiment < -0.2:
+                sentiment_trend = "negative"
+            else:
+                sentiment_trend = "neutral"
+
+            key_topics = await self._extract_key_topics(symbol, company_name)
+            sentiment_momentum = np.random.normal(0.0, 0.1)
+            fear_greed_index = self._calculate_fear_greed_index(overall_sentiment)
+            analyst_rating_trend = self._determine_analyst_trend(overall_sentiment)
+
+            sentiment_data = SentimentData(
+                news_sentiment=news_sentiment or 0.0,
+                social_media_sentiment=reddit_sentiment or 0.0,
+                overall_sentiment=overall_sentiment,
+                sentiment_trend=sentiment_trend,
+                confidence_score=confidence_score,
+                key_topics=key_topics,
+                sentiment_momentum=sentiment_momentum,
+                fear_greed_index=fear_greed_index,
+                analyst_rating_trend=analyst_rating_trend
+            )
+
+            state['sentiment_data'] = sentiment_data
+            st.write(f"✅ {self.name}: Analysis complete")
+
+        except Exception as e:
+            st.error(f"❌ {self.name}: Error - {e}")
+            return self._get_simulated_sentiment(state)
+
+        return state
+
+    async def _analyze_news_sentiment(self, symbol: str, company_name: str) -> float:
+        if not self.newsapi or not HAS_NEWSAPI or not HAS_TEXTBLOB:
+            return None
+
+        try:
+            articles = self.newsapi.get_everything(
+                q=f"{symbol} OR {company_name}",
+                language='en',
+                sort_by='publishedAt',
+                page_size=20,
+                from_param=(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+            )
+
+            if not articles['articles']:
+                return None
+
+            sentiment_scores = []
+
+            for article in articles['articles']:
+                title = article.get('title', '')
+                description = article.get('description', '')
+
+                if title and description:
+                    text = f"{title}. {description}"
+                    blob = TextBlob(text)
+                    sentiment_scores.append(blob.sentiment.polarity)
+
+            return np.mean(sentiment_scores) if sentiment_scores else 0.0
+
+        except Exception as e:
+            st.warning(f"News API error: {e}")
+            return None
+
+    async def _analyze_reddit_sentiment(self, symbol: str, company_name: str) -> float:
+        if not self.reddit or not HAS_PRAW or not HAS_TEXTBLOB:
+            return None
+
+        try:
+            sentiment_scores = []
+            subreddits = ['stocks', 'investing', 'SecurityAnalysis', 'ValueInvesting', 'StockMarket']
+
+            for subreddit_name in subreddits:
+                try:
+                    subreddit = self.reddit.subreddit(subreddit_name)
+
+                    for submission in subreddit.search(f"{symbol}", sort='new', limit=5, time_filter='week'):
+                        text_content = f"{submission.title} {submission.selftext}"
+                        if len(text_content.strip()) > 10:
+                            blob = TextBlob(text_content)
+                            sentiment_scores.append(blob.sentiment.polarity)
+
+                        submission.comments.replace_more(limit=0)
+                        for comment in submission.comments[:3]:
+                            if hasattr(comment, 'body') and len(comment.body) > 20:
+                                if comment.body not in ['[deleted]', '[removed]']:
+                                    blob = TextBlob(comment.body)
+                                    sentiment_scores.append(blob.sentiment.polarity)
+
+                except Exception as e:
+                    continue
+
+            return np.mean(sentiment_scores) if sentiment_scores else 0.0
+
+        except Exception as e:
+            st.warning(f"Reddit API error: {e}")
+            return None
+
+    async def _extract_key_topics(self, symbol: str, company_name: str) -> List[str]:
+        topics_from_news = []
+        
+        if self.newsapi and HAS_NEWSAPI:
+            try:
+                articles = self.newsapi.get_everything(
+                    q=f"{symbol} OR {company_name}",
+                    language='en',
+                    sort_by='publishedAt',
+                    page_size=10
+                )
+
+                all_text = ""
+                for article in articles['articles']:
+                    title = article.get('title', '')
+                    description = article.get('description', '')
+                    all_text += f" {title} {description}"
+
+                topics_from_news = self._extract_topics_from_text(all_text)
+
+            except Exception as e:
+                pass
+
+        all_topics = list(set(topics_from_news))
+        return all_topics[:5] if all_topics else ["market_conditions", "earnings"]
+
+    def _extract_topics_from_text(self, text: str) -> List[str]:
+        keywords = {
+            'earnings': ['earnings', 'revenue', 'profit', 'eps', 'quarterly', 'guidance'],
+            'product_launch': ['launch', 'product', 'release', 'announce', 'unveil', 'debut'],
+            'regulation': ['regulation', 'regulatory', 'sec', 'compliance', 'lawsuit', 'legal'],
+            'competition': ['competitor', 'competition', 'market_share', 'rival', 'compete'],
+            'fed_policy': ['fed', 'interest_rate', 'monetary', 'policy', 'powell', 'fomc'],
+            'geopolitical': ['trade', 'tariff', 'china', 'war', 'sanctions', 'politics'],
+            'merger_acquisition': ['merger', 'acquisition', 'buyout', 'takeover', 'deal'],
+            'technology': ['ai', 'artificial_intelligence', 'innovation', 'tech', 'patent'],
+            'market_conditions': ['market', 'volatility', 'correction', 'rally', 'bull', 'bear'],
+            'economic_data': ['gdp', 'inflation', 'unemployment', 'jobs', 'economic', 'economy']
+        }
+
+        found_topics = []
+        text_lower = text.lower()
+
+        for topic, words in keywords.items():
+            if any(word in text_lower for word in words):
+                found_topics.append(topic)
+
+        return found_topics
+
+    def _get_company_name(self, symbol: str) -> str:
+        company_map = {
+            'AAPL': 'Apple',
+            'TSLA': 'Tesla',
+            'MSFT': 'Microsoft',
+            'GOOGL': 'Google',
+            'AMZN': 'Amazon',
+            'META': 'Meta',
+            'NVDA': 'Nvidia',
+            'NFLX': 'Netflix',
+            'AMD': 'AMD',
+            'INTC': 'Intel'
+        }
+        return company_map.get(symbol.upper(), symbol)
+
+    def _calculate_fear_greed_index(self, sentiment: float) -> float:
+        base_index = 50
+        sentiment_adjustment = sentiment * 30
+        return max(0, min(100, base_index + sentiment_adjustment))
+
+    def _determine_analyst_trend(self, sentiment: float) -> str:
+        if sentiment > 0.3:
+            return "upgrade"
+        elif sentiment < -0.3:
+            return "downgrade"
+        else:
+            return "neutral"
+
+    def _get_simulated_sentiment(self, state):
+        sentiment_data = SentimentData(
+            news_sentiment=np.random.normal(0.1, 0.3),
+            social_media_sentiment=np.random.normal(0.0, 0.4),
+            overall_sentiment=np.random.normal(0.0, 0.3),
+            sentiment_trend="neutral",
+            confidence_score=0.3,
+            key_topics=["market_conditions", "earnings", "economic_data"],
+            sentiment_momentum=np.random.normal(0.0, 0.2),
+            fear_greed_index=np.random.uniform(20, 80),
+            analyst_rating_trend="neutral"
+        )
+        state['sentiment_data'] = sentiment_data
+        return state
+
+# Strategist agent
+class StrategistAgent:
+    def __init__(self, api_key: Optional[str] = None):
+        self.name = "StrategistAgent"
+        self.client = None
+        self.has_openai = False
+
+        if api_key and HAS_OPENAI:
+            try:
+                self.client = OpenAI(api_key=api_key)
+                self.has_openai = True
+                st.write(f"✅ {self.name} initialized with GPT-4")
+            except Exception as e:
+                st.warning(f"GPT initialization failed: {e}")
+                self.has_openai = False
+        else:
+            st.write(f"✅ {self.name} using rule-based analysis")
+
+    async def process(self, state: Dict) -> Dict:
+        try:
+            st.write(f"🤖 {self.name}: Generating AI recommendation...")
+
+            required_data = ['market_data']
+            missing_data = [key for key in required_data if key not in state or not state[key]]
+
+            if missing_data:
+                st.warning(f"{self.name}: Missing required data: {missing_data}")
+                return state
+
+            if self.has_openai and self.client:
+                try:
+                    recommendation = await self._generate_gpt_recommendation(state)
+                    st.write(f"✅ {self.name}: GPT-4 recommendation generated")
+                except Exception as e:
+                    st.warning(f"GPT-4 failed, using enhanced fallback: {e}")
+                    recommendation = self._generate_enhanced_recommendation(state)
+            else:
+                recommendation = self._generate_enhanced_recommendation(state)
+
+            state['recommendation'] = recommendation
+            st.write(f"✅ {self.name}: {recommendation.action} recommendation")
+
+        except Exception as e:
+            st.error(f"❌ {self.name}: Error - {e}")
+
+        return state
+
+    def _generate_enhanced_recommendation(self, state: Dict) -> PersonalizedRecommendation:
+        current_price = 100.0
+        if 'market_data' in state and state['market_data']:
+            current_price = state['market_data'].current_price
+
+        technical_score = self._calculate_technical_score(state)
+        forecast_score = self._calculate_forecast_score(state)
+        risk_score = self._calculate_risk_score(state)
+        macro_score = self._calculate_macro_score(state)
+        sentiment_score = self._calculate_sentiment_score(state)
+
+        overall_score = (
+            technical_score * 0.25 +
+            forecast_score * 0.25 +
+            risk_score * 0.20 +
+            macro_score * 0.15 +
+            sentiment_score * 0.15
+        )
+
+        if overall_score > 0.6:
+            action = "BUY"
+            confidence = min(0.95, 0.6 + overall_score * 0.3)
+            position_size = min(0.4, confidence * 0.5)
+            risk_level = "LOW" if confidence > 0.8 else "MEDIUM"
+            time_horizon = "MEDIUM"
+        elif overall_score < -0.6:
+            action = "SELL"
+            confidence = min(0.95, 0.6 + abs(overall_score) * 0.3)
+            position_size = min(0.3, confidence * 0.4)
+            risk_level = "MEDIUM" if confidence > 0.7 else "HIGH"
+            time_horizon = "SHORT"
+        else:
+            action = "HOLD"
+            confidence = 0.6 + abs(overall_score) * 0.2
+            position_size = 0.0
+            risk_level = "LOW"
+            time_horizon = "LONG"
+
+        detailed_reasoning = self._generate_detailed_reasoning(state, overall_score)
+
+        try:
+            risk_factors, opportunity_factors = self._identify_risk_opportunity_factors(state)
+        except:
+            risk_factors = ["High volatility environment", "Technical overbought conditions"]
+            opportunity_factors = ["Strong trend momentum", "Forecast confidence"]
+
+        try:
+            alternative_scenarios = self._generate_alternative_scenarios(state)
+        except:
+            alternative_scenarios = {
+                "bull_case": "Technical momentum continues with improving fundamentals",
+                "bear_case": "Risk factors materialize leading to correction",
+                "base_case": "Mixed signals result in sideways price action"
+            }
+
+        try:
+            portfolio_impact = self._analyze_portfolio_impact(state, action, position_size)
+        except:
+            portfolio_impact = f"{action} position of {position_size:.1%} would impact portfolio risk profile"
+
+        try:
+            market_timing_analysis = self._analyze_market_timing(state)
+        except:
+            market_timing_analysis = "Mixed timing signals suggest cautious approach"
+
+        risk_reward_ratio = self._calculate_risk_reward_ratio(current_price, action, state)
+        probability_of_success = min(0.9, confidence + 0.1)
+        max_drawdown_estimate = self._estimate_maximum_drawdown(state)
+
+        return PersonalizedRecommendation(
+            action=action,
+            confidence=confidence,
+            position_size=position_size,
+            entry_price=current_price,
+            stop_loss=current_price * (0.92 if action == "BUY" else 1.08),
+            take_profit=current_price * (1.25 if action == "BUY" else 0.75),
+            risk_level=risk_level,
+            time_horizon=time_horizon,
+            detailed_reasoning=detailed_reasoning,
+            key_risk_factors=risk_factors,
+            key_opportunity_factors=opportunity_factors,
+            alternative_scenarios=alternative_scenarios,
+            portfolio_impact=portfolio_impact,
+            market_timing_analysis=market_timing_analysis,
+            risk_reward_ratio=risk_reward_ratio,
+            probability_of_success=probability_of_success,
+            maximum_drawdown_estimate=max_drawdown_estimate
+        )
+
+    def _calculate_technical_score(self, state: Dict) -> float:
+        if 'market_data' not in state or not state['market_data']:
+            return 0.0
+
+        md = state['market_data']
+        score = 0.0
+
+        trend_scores = {
+            "strongly_bullish": 1.0, "bullish": 0.5, "neutral": 0.0,
+            "bearish": -0.5, "strongly_bearish": -1.0
+        }
+        score += trend_scores.get(md.trend, 0.0) * 0.4
+
+        if md.rsi < 30:
+            score += 0.3
+        elif md.rsi > 70:
+            score -= 0.3
+        elif 40 <= md.rsi <= 60:
+            score += 0.1
+
+        macd_scores = {"bullish": 0.2, "bearish": -0.2, "neutral": 0.0}
+        score += macd_scores.get(md.macd_signal, 0.0)
+
+        volume_scores = {"increasing": 0.1, "stable": 0.0, "decreasing": -0.05}
+        score += volume_scores.get(md.volume_trend, 0.0)
+
+        return max(-1.0, min(1.0, score))
+
+    def _calculate_forecast_score(self, state: Dict) -> float:
+        if 'forecast_data' not in state or not state['forecast_data']:
+            return 0.0
+
+        fd = state['forecast_data']
+        current_price = state.get('market_data', {}).current_price if 'market_data' in state else 100
+
+        price_change = (fd.ensemble_forecast - current_price) / current_price
+        confidence_weighted_change = price_change * fd.forecast_confidence
+        upside_bonus = (fd.upside_probability - 0.5) * 0.5
+        volatility_penalty = -fd.volatility_forecast * 0.2
+
+        score = confidence_weighted_change + upside_bonus + volatility_penalty
+        return max(-1.0, min(1.0, score * 2))
+
+    def _calculate_risk_score(self, state: Dict) -> float:
+        if 'risk_metrics' not in state or not state['risk_metrics']:
+            return 0.0
+
+        rm = state['risk_metrics']
+        score = 0.0
+
+        if rm.sharpe_ratio > 1.5:
+            score += 0.5
+        elif rm.sharpe_ratio > 1.0:
+            score += 0.25
+        elif rm.sharpe_ratio < 0:
+            score -= 0.5
+
+        if rm.portfolio_volatility > 0.4:
+            score -= 0.3
+        elif rm.portfolio_volatility < 0.15:
+            score += 0.15
+
+        if rm.maximum_drawdown < -0.3:
+            score -= 0.2
+        elif rm.maximum_drawdown > -0.1:
+            score += 0.1
+
+        return max(-1.0, min(1.0, score))
+
+    def _calculate_macro_score(self, state: Dict) -> float:
+        if 'macro_data' not in state or not state['macro_data']:
+            return 0.0
+
+        md = state['macro_data']
+        score = 0.0
+
+        sentiment_scores = {"bullish": 0.5, "neutral": 0.0, "bearish": -0.5}
+        score += sentiment_scores.get(md.market_sentiment, 0.0)
+
+        if md.vix < 15:
+            score += 0.3
+        elif md.vix > 30:
+            score -= 0.3
+
+        if md.gdp_growth > 3.0:
+            score += 0.1
+        elif md.gdp_growth < 1.0:
+            score -= 0.1
+
+        return max(-1.0, min(1.0, score))
+
+    def _calculate_sentiment_score(self, state: Dict) -> float:
+        if 'sentiment_data' not in state or not state['sentiment_data']:
+            return 0.0
+
+        sd = state['sentiment_data']
+        sentiment_score = sd.overall_sentiment * sd.confidence_score
+        fear_greed_factor = (sd.fear_greed_index - 50) / 100
+        analyst_scores = {"upgrade": 0.2, "neutral": 0.0, "downgrade": -0.2}
+        analyst_score = analyst_scores.get(sd.analyst_rating_trend, 0.0)
+
+        total_score = sentiment_score * 0.6 + fear_greed_factor * 0.3 + analyst_score * 0.1
+        return max(-1.0, min(1.0, total_score))
+
+    def _generate_detailed_reasoning(self, state: Dict, overall_score: float) -> str:
+        reasoning = f"Multi-agent analysis yields overall score of {overall_score:.2f}.\n\n"
+
+        if 'market_data' in state and state['market_data']:
+            md = state['market_data']
+            reasoning += f"TECHNICAL: {md.trend} trend, RSI {md.rsi:.1f}, {md.macd_signal} MACD.\n"
+
+        if 'risk_metrics' in state and state['risk_metrics']:
+            rm = state['risk_metrics']
+            reasoning += f"RISK: Sharpe {rm.sharpe_ratio:.2f}, volatility {rm.portfolio_volatility:.1%}.\n"
+
+        if 'forecast_data' in state and state['forecast_data']:
+            fd = state['forecast_data']
+            reasoning += f"FORECAST: ${fd.ensemble_forecast:.2f} target, {fd.forecast_confidence:.1%} confidence.\n"
+
+        return reasoning
+
+    def _identify_risk_opportunity_factors(self, state: Dict) -> tuple:
+        risk_factors = []
+        opportunity_factors = []
+
+        if 'market_data' in state and state['market_data']:
+            md = state['market_data']
+            if md.rsi > 70:
+                risk_factors.append("Overbought conditions (RSI > 70)")
+            elif md.rsi < 30:
+                opportunity_factors.append("Oversold conditions")
+
+        if 'risk_metrics' in state and state['risk_metrics']:
+            rm = state['risk_metrics']
+            if rm.portfolio_volatility > 0.3:
+                risk_factors.append("High volatility")
+            if rm.sharpe_ratio > 1.0:
+                opportunity_factors.append("Strong risk-adjusted returns")
+
+        return risk_factors[:3], opportunity_factors[:3]
+
+    def _generate_alternative_scenarios(self, state: Dict) -> dict:
+        return {
+            "bull_case": "Technical momentum and positive catalysts drive upside",
+            "bear_case": "Risk factors materialize leading to correction",
+            "base_case": "Mixed signals result in sideways action"
+        }
+
+    def _analyze_portfolio_impact(self, state: Dict, action: str, position_size: float) -> str:
+        return f"{action} position of {position_size:.1%} would impact portfolio risk and diversification"
+
+    def _analyze_market_timing(self, state: Dict) -> str:
+        timing_factors = []
+
+        if 'market_data' in state and state['market_data']:
+            md = state['market_data']
+            if md.rsi > 70:
+                timing_factors.append("overbought conditions suggest caution")
+            elif md.rsi < 30:
+                timing_factors.append("oversold conditions favor entry")
+
+        if timing_factors:
+            return "Timing analysis: " + "; ".join(timing_factors)
+        else:
+            return "Mixed timing signals suggest neutral approach"
+
+    def _calculate_risk_reward_ratio(self, current_price: float, action: str, state: Dict) -> float:
+        if action == "HOLD":
+            return 1.0
+
+        base_ratio = 2.0
+
+        if 'risk_metrics' in state and state['risk_metrics']:
+            volatility = state['risk_metrics'].portfolio_volatility
+            if volatility > 0.3:
+                base_ratio = 1.5
+            elif volatility < 0.15:
+                base_ratio = 2.5
+
+        return base_ratio
+
+    def _estimate_maximum_drawdown(self, state: Dict) -> float:
+        if 'risk_metrics' in state and state['risk_metrics']:
+            return abs(state['risk_metrics'].maximum_drawdown)
+        return 0.15
+
+# Financial planner agent
+class FinancialPlannerAgent:
+    def __init__(self):
+        self.name = "FinancialPlannerAgent"
+
+        self.strategies = {
+            "conservative": {
+                "us_stocks": 0.30, "international_stocks": 0.10,
+                "bonds": 0.55, "cash": 0.05
+            },
+            "moderate": {
+                "us_stocks": 0.50, "international_stocks": 0.20,
+                "bonds": 0.25, "cash": 0.05
+            },
+            "aggressive": {
+                "us_stocks": 0.60, "international_stocks": 0.25,
+                "bonds": 0.10, "cash": 0.05
+            }
+        }
+
+        self.asset_assumptions = {
+            "us_stocks": {"return": 0.10, "volatility": 0.16},
+            "international_stocks": {"return": 0.08, "volatility": 0.18},
+            "bonds": {"return": 0.04, "volatility": 0.06},
+            "cash": {"return": 0.02, "volatility": 0.01}
+        }
+
+    async def process(self, state: Dict, goal: FinancialGoal) -> Dict:
+        try:
+            st.write(f"💰 {self.name}: Creating financial plan...")
+
+            projections = self._calculate_projections(goal)
+            asset_allocation = self._optimize_allocation(goal)
+
+            plan_sharpe = self._calculate_plan_sharpe(asset_allocation)
+            plan_volatility = self._calculate_plan_volatility(asset_allocation)
+            plan_drawdown = self._estimate_plan_drawdown(asset_allocation)
+
+            tax_optimization = self._optimize_taxes(goal)
+            monthly_breakdown = self._calculate_monthly_breakdown(goal, asset_allocation)
+            monte_carlo = self._run_monte_carlo(goal, asset_allocation, 1000)
+            recommendations = self._generate_recommendations(goal, projections, monte_carlo)
+
+            plan_result = FinancialPlanResult(
+                goal=goal,
+                projected_value=projections['projected_value'],
+                success_probability=projections['success_probability'],
+                required_monthly=projections['required_monthly'],
+                asset_allocation=asset_allocation,
+                tax_optimization=tax_optimization,
+                monthly_breakdown=monthly_breakdown,
+                recommendations=recommendations,
+                is_achievable=projections['is_achievable'],
+                monte_carlo_results=monte_carlo,
+                plan_sharpe_ratio=plan_sharpe,
+                plan_max_drawdown=plan_drawdown,
+                plan_volatility=plan_volatility
+            )
+
+            state['financial_plan'] = plan_result
+            st.write(f"✅ {self.name}: Financial plan created")
+
+        except Exception as e:
+            st.error(f"❌ {self.name}: Error - {e}")
+
+        return state
+
+    def _calculate_projections(self, goal: FinancialGoal) -> Dict[str, float]:
+        allocation = self.strategies[goal.risk_tolerance]
+        portfolio_return = sum(
+            allocation[asset] * self.asset_assumptions[asset]["return"]
+            for asset in allocation
+        )
+
+        years = goal.time_horizon_years
+        monthly_rate = portfolio_return / 12
+        months = years * 12
+
+        fv_current = goal.current_amount * (1 + portfolio_return) ** years
+
+        if monthly_rate > 0:
+            fv_contributions = goal.monthly_contribution * (
+                ((1 + monthly_rate) ** months - 1) / monthly_rate
+            )
+        else:
+            fv_contributions = goal.monthly_contribution * months
+
+        projected_value = fv_current + fv_contributions
+        success_probability = min(1.0, projected_value / goal.target_amount)
+        gap = goal.target_amount - projected_value
+
+        if gap > 0 and monthly_rate > 0:
+            required_monthly = gap / (((1 + monthly_rate) ** months - 1) / monthly_rate)
+        else:
+            required_monthly = 0
+
+        return {
+            'projected_value': projected_value,
+            'success_probability': success_probability,
+            'required_monthly': required_monthly,
+            'is_achievable': gap <= 0,
+            'portfolio_return': portfolio_return
+        }
+
+    def _optimize_allocation(self, goal: FinancialGoal) -> Dict[str, float]:
+        base_allocation = self.strategies[goal.risk_tolerance].copy()
+
+        target_equity_ratio = max(0.3, min(0.9, (100 - goal.age) / 100))
+        current_equity_ratio = base_allocation["us_stocks"] + base_allocation["international_stocks"]
+
+        equity_adjustment = target_equity_ratio - current_equity_ratio
+
+        if abs(equity_adjustment) > 0.05:
+            if equity_adjustment > 0:
+                base_allocation["us_stocks"] += equity_adjustment * 0.7
+                base_allocation["international_stocks"] += equity_adjustment * 0.3
+                base_allocation["bonds"] -= equity_adjustment * 0.8
+                base_allocation["cash"] -= equity_adjustment * 0.2
+            else:
+                reduction = abs(equity_adjustment)
+                base_allocation["us_stocks"] -= reduction * 0.7
+                base_allocation["international_stocks"] -= reduction * 0.3
+                base_allocation["bonds"] += reduction * 0.8
+                base_allocation["cash"] += reduction * 0.2
+
+        if goal.time_horizon_years > 20:
+            base_allocation["us_stocks"] += 0.05
+            base_allocation["bonds"] -= 0.05
+        elif goal.time_horizon_years < 5:
+            base_allocation["us_stocks"] -= 0.10
+            base_allocation["bonds"] += 0.07
+            base_allocation["cash"] += 0.03
+
+        if goal.goal_type == "house":
+            base_allocation["cash"] += 0.10
+            base_allocation["bonds"] += 0.05
+            base_allocation["us_stocks"] -= 0.15
+        elif goal.goal_type == "education":
+            if goal.time_horizon_years < 10:
+                base_allocation["bonds"] += 0.10
+                base_allocation["us_stocks"] -= 0.10
+
+        for key in base_allocation:
+            base_allocation[key] = max(0, base_allocation[key])
+
+        total = sum(base_allocation.values())
+        if total > 0:
+            base_allocation = {k: v/total for k, v in base_allocation.items()}
+
+        return base_allocation
+
+    def _calculate_plan_sharpe(self, allocation: Dict[str, float]) -> float:
+        portfolio_return = sum(
+            allocation[asset] * self.asset_assumptions[asset]["return"]
+            for asset in allocation
+        )
+
+        portfolio_variance = sum(
+            (allocation[asset] ** 2) * (self.asset_assumptions[asset]["volatility"] ** 2)
+            for asset in allocation
+        )
+        portfolio_volatility = np.sqrt(portfolio_variance)
+
+        risk_free_rate = 0.02
+        if portfolio_volatility > 0:
+            sharpe_ratio = (portfolio_return - risk_free_rate) / portfolio_volatility
+        else:
+            sharpe_ratio = 0.0
+
+        return sharpe_ratio
+
+    def _calculate_plan_volatility(self, allocation: Dict[str, float]) -> float:
+        portfolio_variance = sum(
+            (allocation[asset] ** 2) * (self.asset_assumptions[asset]["volatility"] ** 2)
+            for asset in allocation
+        )
+        return np.sqrt(portfolio_variance)
+
+    def _estimate_plan_drawdown(self, allocation: Dict[str, float]) -> float:
+        portfolio_volatility = self._calculate_plan_volatility(allocation)
+        estimated_drawdown = portfolio_volatility * 2.5
+        return min(0.6, max(0.05, estimated_drawdown))
+
+    def _optimize_taxes(self, goal: FinancialGoal) -> Dict[str, float]:
+        annual_contribution = goal.monthly_contribution * 12
+
+        max_401k = 23000 + (7500 if goal.age >= 50 else 0)
+        max_ira = 7000 + (1000 if goal.age >= 50 else 0)
+
+        if goal.annual_income > 120000:
+            max_ira = max(0, max_ira - (goal.annual_income - 120000) * 0.1)
+
+        remaining_contribution = annual_contribution
+
+        optimal_401k = min(max_401k, remaining_contribution * 0.6)
+        remaining_contribution -= optimal_401k
+
+        optimal_ira = min(max_ira, remaining_contribution)
+        remaining_contribution -= optimal_ira
+
+        additional_401k = min(max_401k - optimal_401k, remaining_contribution)
+        optimal_401k += additional_401k
+        remaining_contribution -= additional_401k
+
+        optimal_taxable = remaining_contribution
+
+        tax_deductible = optimal_401k + optimal_ira
+        tax_savings = tax_deductible * goal.tax_rate
+
+        return {
+            "401k_annual": optimal_401k,
+            "401k_monthly": optimal_401k / 12,
+            "ira_annual": optimal_ira,
+            "ira_monthly": optimal_ira / 12,
+            "taxable_annual": optimal_taxable,
+            "taxable_monthly": optimal_taxable / 12,
+            "tax_savings": tax_savings,
+            "marginal_rate": goal.tax_rate
+        }
+
+    def _calculate_monthly_breakdown(self, goal: FinancialGoal, allocation: Dict[str, float]) -> Dict[str, float]:
+        monthly = goal.monthly_contribution
+
+        breakdown = {
+            "total_monthly": monthly
+        }
+
+        for asset, percentage in allocation.items():
+            breakdown[f"{asset}_monthly"] = monthly * percentage
+
+        return breakdown
+
+    def _run_monte_carlo(self, goal: FinancialGoal, allocation: Dict[str, float], n_simulations: int = 1000) -> Dict[str, float]:
+        portfolio_return = sum(
+            allocation[asset] * self.asset_assumptions[asset]["return"]
+            for asset in allocation
+        )
+        portfolio_volatility = self._calculate_plan_volatility(allocation)
+
+        results = []
+        drawdowns = []
+        sharpe_ratios = []
+
+        for _ in range(n_simulations):
+            value = goal.current_amount
+            peak_value = value
+            max_drawdown = 0
+            annual_returns = []
+
+            for year in range(goal.time_horizon_years):
+                value += goal.monthly_contribution * 12
+
+                annual_return = np.random.normal(portfolio_return, portfolio_volatility)
+                annual_returns.append(annual_return)
+
+                if np.random.random() < 0.1:
+                    stress_factor = np.random.uniform(0.7, 0.9)
+                    annual_return *= stress_factor
+
+                value *= (1 + annual_return)
+
+                if value > peak_value:
+                    peak_value = value
+                else:
+                    current_drawdown = (peak_value - value) / peak_value
+                    max_drawdown = max(max_drawdown, current_drawdown)
+
+                value = max(0, value)
+
+            if len(annual_returns) > 0:
+                avg_return = np.mean(annual_returns)
+                return_std = np.std(annual_returns)
+                sim_sharpe = (avg_return - 0.02) / return_std if return_std > 0 else 0
+                sharpe_ratios.append(sim_sharpe)
+
+            results.append(value)
+            drawdowns.append(max_drawdown)
+
+        results = np.array(results)
+        drawdowns = np.array(drawdowns)
+        sharpe_ratios = np.array(sharpe_ratios)
+
+        return {
+            "mean": np.mean(results),
+            "median": np.percentile(results, 50),
+            "percentile_5": np.percentile(results, 5),
+            "percentile_10": np.percentile(results, 10),
+            "percentile_25": np.percentile(results, 25),
+            "percentile_75": np.percentile(results, 75),
+            "percentile_90": np.percentile(results, 90),
+            "percentile_95": np.percentile(results, 95),
+            "success_rate": np.mean(results >= goal.target_amount),
+            "average_drawdown": np.mean(drawdowns),
+            "worst_drawdown": np.max(drawdowns),
+            "average_sharpe": np.mean(sharpe_ratios),
+            "sharpe_std": np.std(sharpe_ratios)
+        }
+
+    def _generate_recommendations(self, goal: FinancialGoal, projections: Dict, monte_carlo: Dict) -> List[str]:
+        recommendations = []
+
+        if projections['is_achievable']:
+            recommendations.append(f"Goal is achievable! Projected: ${projections['projected_value']:,.0f}")
+        else:
+            shortfall = projections['required_monthly']
+            recommendations.append(f"Increase monthly contribution by ${shortfall:,.0f} to reach goal")
+
+        success_rate = monte_carlo['success_rate']
+        if success_rate > 0.8:
+            recommendations.append("High probability of success based on Monte Carlo analysis")
+        elif success_rate < 0.5:
+            recommendations.append("Consider extending timeline or increasing contributions")
+
+        avg_sharpe = monte_carlo.get('average_sharpe', 0)
+        if avg_sharpe > 1.0:
+            recommendations.append(f"Excellent risk-adjusted returns expected (Sharpe: {avg_sharpe:.2f})")
+        elif avg_sharpe < 0.5:
+            recommendations.append("Consider adjusting allocation for better risk-adjusted returns")
+
+        if goal.age < 35:
+            recommendations.append("Young investor advantage, time is your greatest asset")
+        elif goal.age > 45:
+            recommendations.append("Focus on risk management while maintaining growth")
+
+        if goal.time_horizon_years > 15:
+            recommendations.append("Long timeline allows for growth strategy")
+        elif goal.time_horizon_years < 5:
+            recommendations.append("Short timeline requires conservative approach")
+
+        if goal.risk_tolerance == "conservative" and goal.time_horizon_years > 10:
+            recommendations.append("Consider moderate risk for better long-term growth potential")
+
+        recommendations.append("Rebalance portfolio quarterly to maintain target allocation")
+        recommendations.append("Review and adjust plan annually or after major life changes")
+
+        return recommendations[:8]
+
+# Main pipeline function
+async def run_pipeline(symbol="AAPL", openai_api_key=None, financial_goal=None, 
+                      fred_api_key=None, news_api_key=None, reddit_client_id=None, 
+                      reddit_client_secret=None, reddit_user_agent=None):
+    
+    st.write("🚀 Starting AI Financial Forecasting Pipeline...")
+    
+    state = {}
+    
+    # Initialize agents
+    market_agent = MarketDataAgent()
+    risk_agent = RiskAgent()
+    forecast_agent = ForecastingAgent()
+    macro_agent = MacroEconomicAgent(fred_api_key=fred_api_key)
+    sentiment_agent = SentimentAgent(
+        news_api_key=news_api_key,
+        reddit_client_id=reddit_client_id,
+        reddit_client_secret=reddit_client_secret,
+        reddit_user_agent=reddit_user_agent
+    )
+    strategist_agent = StrategistAgent(api_key=openai_api_key)
+    planner_agent = FinancialPlannerAgent()
+
+    try:
+        # Run the pipeline
+        st.write("📊 Data Collection and Analysis")
+        state = await market_agent.process(state, symbol=symbol, period="1y")
+        state = await risk_agent.process(state)
+        state = await forecast_agent.process(state, forecast_horizon=5)
+
+        st.write("🌍 Macro and Sentiment Analysis")
+        state = await macro_agent.process(state)
+        state = await sentiment_agent.process(state)
+
+        st.write("🤖 AI Strategy Generation")
+        state = await strategist_agent.process(state)
+
+        if financial_goal:
+            st.write("💰 Financial Planning")
+            state = await planner_agent.process(state, financial_goal)
+
+        st.success("✅ Pipeline Complete!")
+        return state
+
+    except Exception as e:
+        st.error(f"❌ Pipeline error: {e}")
+        return state
+
+# Page configuration
 st.set_page_config(
-    page_title="AI Financial Forecasting",
+    page_title="AI Financial Forecasting System",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Import your financial system
-try:
-    # Import directly from Final_pls module (adjust path as needed)
-    from Final_vCM import (
-        MarketDataAgent, RiskAgent, ForecastingAgent, MacroEconomicAgent,
-        SentimentAgent, StrategistAgent, FinancialPlannerAgent,
-        FinancialGoal, run_pipeline_with_real_apis, print_pipeline_summary,
-        create_dashboard_visualizations
-    )
-    SYSTEM_AVAILABLE = True
-except ImportError as e:
-    st.error(f"Could not import the financial system: {e}")
-    st.error("Please ensure Final_pls.py is in the same directory or in your Python path.")
-    SYSTEM_AVAILABLE = False
-
-# Custom CSS
+# Custom CSS for better styling
 st.markdown("""
 <style>
-    .main-header {
-        font-size: 3rem;
-        font-weight: bold;
-        color: #1f77b4;
-        text-align: center;
-        margin-bottom: 2rem;
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+        font-size: 20px;
     }
-    .metric-box {
+    .metric-card {
         background-color: #f0f2f6;
-        padding: 1rem;
+        padding: 20px;
         border-radius: 10px;
-        border-left: 5px solid #1f77b4;
-        margin: 0.5rem 0;
+        margin: 10px 0;
     }
     .recommendation-box {
-        background-color: #e8f5e8;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 5px solid #28a745;
-        margin: 1rem 0;
+        background-color: #e8f4f8;
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #1f77b4;
     }
-    .risk-box {
+    .risk-warning {
         background-color: #fff3cd;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 5px solid #ffc107;
-        margin: 1rem 0;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 4px solid #ffc107;
     }
-    .sidebar-section {
-        background-color: #f8f9fa;
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 1rem 0;
+    .success-box {
+        background-color: #d4edda;
+        padding: 10px;
+        border-radius: 5px;
+        border-left: 4px solid #28a745;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Session state initialization
+# Initialize session state
 if 'analysis_results' not in st.session_state:
     st.session_state.analysis_results = None
 if 'analysis_running' not in st.session_state:
     st.session_state.analysis_running = False
+if 'selected_symbol' not in st.session_state:
+    st.session_state.selected_symbol = "AAPL"
 
-# Helper functions
-def run_analysis_sync(symbol, use_financial_planning, financial_params, openai_key=None):
-    """Run the analysis synchronously with proper error handling"""
-    try:
-        # Create new event loop for this analysis
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        
-        try:
-            financial_goal = None
-            if use_financial_planning:
-                financial_goal = FinancialGoal(**financial_params)
-            
-            # Set OpenAI key if provided
-            api_key = openai_key if openai_key else None
-            
-            result = loop.run_until_complete(
-                run_pipeline_with_real_apis(
-                    symbol=symbol, 
-                    openai_api_key=api_key,
-                    financial_goal=financial_goal
-                )
-            )
-            return result
-        finally:
-            loop.close()
-            
-    except Exception as e:
-        st.error(f"Analysis failed: {str(e)}")
-        st.error("This may be due to API limits, network issues, or missing dependencies.")
-        return None
-
-def create_price_chart(market_data):
-    """Create price chart with technical indicators"""
-    if not market_data or not hasattr(market_data, 'prices'):
-        return None
-    
-    fig = go.Figure()
-    
-    # Price line
-    fig.add_trace(go.Scatter(
-        x=market_data.prices.index,
-        y=market_data.prices.values,
-        mode='lines',
-        name='Price',
-        line=dict(color='#1f77b4', width=2)
-    ))
-    
-    # Support and resistance levels
-    fig.add_hline(
-        y=market_data.support_level,
-        line_dash="dash",
-        line_color="green",
-        annotation_text="Support"
-    )
-    fig.add_hline(
-        y=market_data.resistance_level,
-        line_dash="dash",
-        line_color="red",
-        annotation_text="Resistance"
-    )
-    
-    fig.update_layout(
-        title=f"{market_data.symbol} Price Chart",
-        xaxis_title="Date",
-        yaxis_title="Price ($)",
-        hovermode='x unified',
-        showlegend=True,
-        height=400
-    )
-    
-    return fig
-
-def create_risk_dashboard(risk_metrics):
-    """Create risk metrics dashboard"""
-    if not risk_metrics:
-        return None
-    
-    fig = make_subplots(
-        rows=2, cols=2,
-        subplot_titles=['Sharpe Ratio', 'Volatility (%)', 'Max Drawdown (%)', 'VaR 5% (%)'],
-        specs=[[{"type": "indicator"}, {"type": "indicator"}],
-               [{"type": "indicator"}, {"type": "indicator"}]]
-    )
-    
-    # Sharpe Ratio gauge
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=risk_metrics.sharpe_ratio,
-        title={'text': "Sharpe Ratio"},
-        gauge={'axis': {'range': [-2, 3]},
-               'bar': {'color': "darkblue"},
-               'steps': [{'range': [-2, 0], 'color': "lightgray"},
-                        {'range': [0, 1], 'color': "yellow"},
-                        {'range': [1, 3], 'color': "green"}],
-               'threshold': {'line': {'color': "red", 'width': 4},
-                           'thickness': 0.75, 'value': 1.5}},
-        domain={'x': [0, 1], 'y': [0, 1]}
-    ), row=1, col=1)
-    
-    # Volatility gauge
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=risk_metrics.portfolio_volatility * 100,
-        title={'text': "Volatility (%)"},
-        gauge={'axis': {'range': [0, 50]},
-               'bar': {'color': "orange"},
-               'steps': [{'range': [0, 15], 'color': "green"},
-                        {'range': [15, 25], 'color': "yellow"},
-                        {'range': [25, 50], 'color': "red"}]},
-        domain={'x': [0, 1], 'y': [0, 1]}
-    ), row=1, col=2)
-    
-    # Max Drawdown gauge
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=abs(risk_metrics.maximum_drawdown) * 100,
-        title={'text': "Max Drawdown (%)"},
-        gauge={'axis': {'range': [0, 50]},
-               'bar': {'color': "red"},
-               'steps': [{'range': [0, 10], 'color': "green"},
-                        {'range': [10, 20], 'color': "yellow"},
-                        {'range': [20, 50], 'color': "red"}]},
-        domain={'x': [0, 1], 'y': [0, 1]}
-    ), row=2, col=1)
-    
-    # VaR gauge
-    fig.add_trace(go.Indicator(
-        mode="gauge+number",
-        value=abs(risk_metrics.value_at_risk_5pct) * 100,
-        title={'text': "VaR 5% (%)"},
-        gauge={'axis': {'range': [0, 20]},
-               'bar': {'color': "purple"},
-               'steps': [{'range': [0, 5], 'color': "green"},
-                        {'range': [5, 10], 'color': "yellow"},
-                        {'range': [10, 20], 'color': "red"}]},
-        domain={'x': [0, 1], 'y': [0, 1]}
-    ), row=2, col=2)
-    
-    fig.update_layout(height=500, title_text="Risk Metrics Dashboard")
-    return fig
-
-def create_forecast_comparison(forecast_data, current_price):
-    """Create forecast comparison chart"""
-    if not forecast_data:
-        return None
-    
-    forecasts = {
-        'ARIMA': forecast_data.arima_forecast,
-        'Prophet': forecast_data.prophet_forecast,
-        'LSTM': forecast_data.lstm_forecast,
-        'Ensemble': forecast_data.ensemble_forecast
-    }
-    
-    # Calculate percentage changes
-    pct_changes = {k: ((v - current_price) / current_price) * 100 for k, v in forecasts.items()}
-    
-    fig = go.Figure()
-    
-    # Add bars for each forecast
-    colors = ['#ff7f0e', '#2ca02c', '#d62728', '#1f77b4']
-    for i, (name, value) in enumerate(pct_changes.items()):
-        fig.add_trace(go.Bar(
-            x=[name],
-            y=[value],
-            name=name,
-            marker_color=colors[i],
-            text=f'{value:+.1f}%',
-            textposition='auto'
-        ))
-    
-    fig.update_layout(
-        title="Price Forecast Comparison",
-        xaxis_title="Forecast Method",
-        yaxis_title="Expected Price Change (%)",
-        showlegend=False,
-        height=400
-    )
-    
-    return fig
-
-def create_sentiment_pie(sentiment_data):
-    """Create sentiment analysis pie chart"""
-    if not sentiment_data:
-        return None
-    
-    # Convert sentiment to categories
-    overall = sentiment_data.overall_sentiment
-    if overall > 0.1:
-        values = [60 + overall*20, 30, 10 - overall*10]
-    elif overall < -0.1:
-        values = [10 + overall*10, 30, 60 - overall*20]
-    else:
-        values = [40, 40, 20]
-    
-    # Ensure non-negative values
-    values = [max(0, v) for v in values]
-    
-    fig = go.Figure(data=[go.Pie(
-        labels=['Positive', 'Neutral', 'Negative'],
-        values=values,
-        hole=.3,
-        marker_colors=['#28a745', '#ffc107', '#dc3545']
-    )])
-    
-    fig.update_layout(
-        title="Market Sentiment Analysis",
-        annotations=[dict(text='Sentiment', x=0.5, y=0.5, font_size=20, showarrow=False)],
-        height=400
-    )
-    
-    return fig
-
-def create_asset_allocation_chart(allocation_dict):
-    """Create asset allocation pie chart"""
-    if not allocation_dict:
-        return None
-    
-    labels = [k.replace('_', ' ').title() for k in allocation_dict.keys()]
-    values = [v * 100 for v in allocation_dict.values()]
-    
-    fig = go.Figure(data=[go.Pie(
-        labels=labels,
-        values=values,
-        hole=.3
-    )])
-    
-    fig.update_layout(
-        title="Recommended Asset Allocation",
-        height=400
-    )
-    
-    return fig
-
-# Main app
 def main():
+    """Main Streamlit application"""
+    
     # Header
-    st.markdown('<div class="main-header">AI Financial Forecasting System</div>', unsafe_allow_html=True)
+    st.title("🤖 AI Financial Forecasting System")
+    st.markdown("### Multi-Agent Investment Analysis & Planning Platform")
     
-    if not SYSTEM_AVAILABLE:
-        st.error("Financial analysis system is not available. Please check the import configuration.")
-        st.info("Make sure you have installed all required packages: yfinance, pandas, numpy, plotly, etc.")
-        return
-    
-    # Sidebar
-    st.sidebar.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-    st.sidebar.header("Analysis Configuration")
-    
-    # Stock symbol input
-    symbol = st.sidebar.text_input(
-        "Stock Symbol", 
-        value="AAPL", 
-        help="Enter a valid stock ticker symbol (e.g., AAPL, TSLA, MSFT)"
-    ).upper().strip()
-    
-    # OpenAI API Key
-    openai_key = st.sidebar.text_input(
-        "OpenAI API Key (Optional)", 
-        type="password", 
-        help="For enhanced AI recommendations using GPT-4"
-    )
-    
-    # Financial planning toggle
-    use_financial_planning = st.sidebar.checkbox(
-        "Include Financial Planning", 
-        value=False,
-        help="Enable comprehensive financial planning analysis"
-    )
-    
-    financial_params = {}
-    if use_financial_planning:
-        st.sidebar.subheader("Financial Planning Parameters")
-        financial_params = {
-            'target_amount': st.sidebar.number_input(
-                "Target Amount ($)", 
-                value=1000000, 
-                min_value=1000,
-                step=10000,
-                help="Your financial goal amount"
-            ),
-            'current_amount': st.sidebar.number_input(
-                "Current Amount ($)", 
-                value=50000, 
-                min_value=0,
-                step=1000,
-                help="Your current savings/investment amount"
-            ),
-            'monthly_contribution': st.sidebar.number_input(
-                "Monthly Contribution ($)", 
-                value=2000, 
-                min_value=0,
-                step=100,
-                help="Monthly amount you plan to invest"
-            ),
-            'time_horizon_years': st.sidebar.slider(
-                "Time Horizon (years)", 
-                min_value=1, 
-                max_value=50, 
-                value=25,
-                help="Number of years until you need the money"
-            ),
-            'age': st.sidebar.slider(
-                "Age", 
-                min_value=18, 
-                max_value=100, 
-                value=35,
-                help="Your current age"
-            ),
-            'annual_income': st.sidebar.number_input(
-                "Annual Income ($)", 
-                value=120000, 
-                min_value=0,
-                step=5000,
-                help="Your current annual income"
-            ),
-            'risk_tolerance': st.sidebar.selectbox(
-                "Risk Tolerance", 
-                ["conservative", "moderate", "aggressive"], 
-                index=1,
-                help="Your investment risk preference"
-            ),
-            'goal_type': st.sidebar.selectbox(
-                "Goal Type", 
-                ["retirement", "house", "education", "general"], 
-                index=0,
-                help="The purpose of your financial goal"
-            ),
-            'tax_rate': st.sidebar.slider(
-                "Tax Rate", 
-                min_value=0.0, 
-                max_value=0.5, 
-                value=0.22, 
-                step=0.01,
-                help="Your marginal tax rate"
+    # Sidebar for configuration
+    with st.sidebar:
+        st.header("⚙️ Configuration")
+        
+        # Stock Selection
+        st.subheader("📊 Stock Analysis")
+        
+        popular_stocks = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "META", "NVDA", "JPM", "V", "JNJ"]
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            quick_select = st.selectbox(
+                "Quick Select",
+                ["Custom"] + popular_stocks,
+                help="Select from popular stocks or choose Custom to enter your own"
             )
-        }
+        
+        with col2:
+            if quick_select == "Custom":
+                symbol = st.text_input("Enter Symbol", value="AAPL", max_chars=10).upper()
+            else:
+                symbol = quick_select
+                st.text_input("Selected Symbol", value=symbol, disabled=True)
+        
+        st.session_state.selected_symbol = symbol
+        
+        period = st.selectbox(
+            "Analysis Period",
+            ["1mo", "3mo", "6mo", "1y", "2y", "5y"],
+            index=3,
+            help="Historical data period for analysis"
+        )
+        
+        # API Keys Configuration
+        st.subheader("🔑 API Keys (Optional)")
+        st.info("Add your API keys to enable enhanced features. All keys are optional.")
+        
+        # OpenAI API Key
+        openai_api_key = st.text_input(
+            "OpenAI API Key",
+            type="password",
+            help="For enhanced AI recommendations using GPT-4"
+        )
+        
+        # FRED API Key
+        fred_api_key = st.text_input(
+            "FRED API Key",
+            type="password",
+            help="For real economic data from Federal Reserve"
+        )
+        
+        # News API Key
+        news_api_key = st.text_input(
+            "News API Key",
+            type="password",
+            help="For news sentiment analysis"
+        )
+        
+        # Reddit API Keys
+        with st.expander("Reddit API (Optional)", expanded=False):
+            reddit_client_id = st.text_input(
+                "Reddit Client ID",
+                type="password",
+                help="For social media sentiment analysis"
+            )
+            reddit_client_secret = st.text_input(
+                "Reddit Client Secret",
+                type="password"
+            )
+            reddit_user_agent = st.text_input(
+                "Reddit User Agent",
+                placeholder="MyApp/1.0 by YourUsername",
+                help="Identify your application to Reddit"
+            )
+        
+        # Financial Planning
+        st.subheader("💰 Financial Planning")
+        enable_planning = st.checkbox("Enable Financial Planning", value=False)
+        
+        if enable_planning:
+            with st.expander("Goal Configuration", expanded=True):
+                goal_type = st.selectbox(
+                    "Goal Type",
+                    ["retirement", "house", "education", "general"],
+                    help="Type of financial goal"
+                )
+                
+                target_amount = st.number_input(
+                    "Target Amount ($)",
+                    min_value=10000,
+                    max_value=10000000,
+                    value=1000000,
+                    step=50000,
+                    help="Total amount needed for your goal"
+                )
+                
+                current_amount = st.number_input(
+                    "Current Savings ($)",
+                    min_value=0,
+                    max_value=10000000,
+                    value=50000,
+                    step=5000,
+                    help="Amount already saved"
+                )
+                
+                monthly_contribution = st.number_input(
+                    "Monthly Contribution ($)",
+                    min_value=0,
+                    max_value=50000,
+                    value=2000,
+                    step=100,
+                    help="Amount you can save monthly"
+                )
+                
+                time_horizon = st.slider(
+                    "Time Horizon (Years)",
+                    min_value=1,
+                    max_value=40,
+                    value=25,
+                    help="Years until you need the money"
+                )
+                
+                risk_tolerance = st.select_slider(
+                    "Risk Tolerance",
+                    options=["conservative", "moderate", "aggressive"],
+                    value="moderate",
+                    help="Your comfort level with investment risk"
+                )
+                
+                age = st.number_input(
+                    "Your Age",
+                    min_value=18,
+                    max_value=100,
+                    value=35,
+                    help="Your current age"
+                )
+                
+                annual_income = st.number_input(
+                    "Annual Income ($)",
+                    min_value=0,
+                    max_value=1000000,
+                    value=120000,
+                    step=5000,
+                    help="Your annual income for tax planning"
+                )
+        
+        # Run Analysis Button
+        st.markdown("---")
+        run_analysis = st.button(
+            "🚀 Run Analysis",
+            type="primary",
+            use_container_width=True,
+            disabled=st.session_state.analysis_running
+        )
     
-    st.sidebar.markdown('</div>', unsafe_allow_html=True)
+    # Main Content Area
+    if run_analysis:
+        run_analysis_pipeline(
+            symbol=symbol,
+            period=period,
+            openai_api_key=openai_api_key or None,
+            fred_api_key=fred_api_key or None,
+            news_api_key=news_api_key or None,
+            reddit_client_id=reddit_client_id or None,
+            reddit_client_secret=reddit_client_secret or None,
+            reddit_user_agent=reddit_user_agent or None,
+            enable_planning=enable_planning,
+            goal_params={
+                'goal_type': goal_type if enable_planning else None,
+                'target_amount': target_amount if enable_planning else None,
+                'current_amount': current_amount if enable_planning else None,
+                'monthly_contribution': monthly_contribution if enable_planning else None,
+                'time_horizon_years': time_horizon if enable_planning else None,
+                'risk_tolerance': risk_tolerance if enable_planning else None,
+                'age': age if enable_planning else None,
+                'annual_income': annual_income if enable_planning else None
+            } if enable_planning else None
+        )
     
-    # Run Analysis button
-    if st.sidebar.button("🚀 Run Analysis", type="primary", disabled=st.session_state.analysis_running):
-        if symbol:
-            st.session_state.analysis_running = True
-            
-            # Clear previous results
-            st.session_state.analysis_results = None
-            
-            # Create progress container
-            progress_container = st.container()
-            
-            with progress_container:
-                with st.spinner(f"Running comprehensive analysis for {symbol}..."):
-                    progress_bar = st.progress(0)
-                    status_text = st.empty()
-                    
-                    # Update progress
-                    status_text.text("Initializing agents...")
-                    progress_bar.progress(10)
-                    
-                    status_text.text("Fetching market data...")
-                    progress_bar.progress(30)
-                    
-                    status_text.text("Analyzing risk metrics...")
-                    progress_bar.progress(50)
-                    
-                    status_text.text("Generating forecasts...")
-                    progress_bar.progress(70)
-                    
-                    status_text.text("Creating AI recommendation...")
-                    progress_bar.progress(90)
-                    
-                    # Run the actual analysis
-                    results = run_analysis_sync(symbol, use_financial_planning, financial_params, openai_key)
-                    
-                    progress_bar.progress(100)
-                    status_text.text("Analysis complete!")
-                    
-                    st.session_state.analysis_results = results
-                    st.session_state.analysis_running = False
-                    
-                    # Clear progress indicators after a short delay
-                    import time
-                    time.sleep(1)
-                    progress_container.empty()
-                    
-                    if results:
-                        st.success("Analysis completed successfully!")
-                        st.rerun()  # Refresh to show results
-                    else:
-                        st.error("Analysis failed. Please check the logs and try again.")
-        else:
-            st.error("Please enter a valid stock symbol.")
-    
-    # Display results
+    # Display Results
     if st.session_state.analysis_results:
         display_results(st.session_state.analysis_results)
     else:
-        # Show instructions when no results
-        st.info("👈 Configure your analysis parameters in the sidebar and click 'Run Analysis' to get started.")
+        display_welcome_screen()
+
+def display_welcome_screen():
+    """Display welcome screen with instructions"""
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown("""
+        <div style='text-align: center; padding: 50px;'>
+            <h2>Welcome to AI Financial Forecasting System</h2>
+            <p style='font-size: 18px; color: #666;'>
+                Configure your analysis parameters in the sidebar and click "Run Analysis" to begin.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Show example configuration
-        with st.expander("📚 Example Configurations"):
-            st.markdown("""
-            **Basic Stock Analysis:**
-            - Symbol: AAPL, TSLA, MSFT, etc.
-            - Leave financial planning disabled
+        # Feature highlights
+        st.markdown("### 🎯 Key Features")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.info("""
+            **📊 Market Analysis**
+            - Real-time stock data
+            - Technical indicators
+            - Price forecasting
+            """)
             
-            **Retirement Planning:**
-            - Enable financial planning
-            - Set target amount: $1,000,000
-            - Current amount: $50,000
-            - Monthly contribution: $2,000
-            - Time horizon: 25 years
-            - Risk tolerance: Moderate
+            st.success("""
+            **🛡️ Risk Assessment**
+            - Portfolio volatility
+            - Sharpe ratio calculation
+            - GARCH modeling
+            """)
+        
+        with col2:
+            st.warning("""
+            **🌍 Macro Analysis**
+            - Economic indicators
+            - Market sentiment
+            - News analysis
+            """)
             
-            **House Down Payment:**
-            - Goal type: House
-            - Target amount: $100,000
-            - Time horizon: 5 years
-            - Risk tolerance: Conservative
+            st.error("""
+            **💰 Financial Planning**
+            - Goal-based planning
+            - Monte Carlo simulation
+            - Tax optimization
             """)
 
-def display_results(results):
-    """Display analysis results with improved error handling"""
-    if not results:
-        st.warning("No results to display.")
-        return
+def run_analysis_pipeline(symbol, period, openai_api_key, fred_api_key, news_api_key, 
+                         reddit_client_id, reddit_client_secret, reddit_user_agent,
+                         enable_planning, goal_params):
+    """Run the complete analysis pipeline"""
+    
+    st.session_state.analysis_running = True
+    
+    # Create placeholder for progress
+    progress_placeholder = st.empty()
     
     try:
-        # Summary metrics at the top
-        if 'market_data' in results and results['market_data']:
-            md = results['market_data']
+        with st.spinner(f"Analyzing {symbol}..."):
+            progress_bar = progress_placeholder.progress(0)
             
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                change_color = "normal" if abs(md.return_1d) < 0.02 else ("inverse" if md.return_1d < 0 else "normal")
-                st.metric("Current Price", f"${md.current_price:.2f}", f"{md.return_1d:.2%}", delta_color=change_color)
-            with col2:
-                st.metric("Trend", md.trend.replace('_', ' ').title(), "")
-            with col3:
-                rsi_status = "Oversold" if md.rsi < 30 else "Overbought" if md.rsi > 70 else "Normal"
-                st.metric("RSI", f"{md.rsi:.1f}", rsi_status)
-            with col4:
-                st.metric("Volatility (20d)", f"{md.volatility_20d:.1%}", "")
-        
-        # Main content tabs
-        tab1, tab2, tab3, tab4, tab5 = st.tabs([
-            "📊 Market Analysis", 
-            "⚠️ Risk Metrics", 
-            "🔮 Forecasting", 
-            "🧠 AI Recommendation", 
-            "💰 Financial Planning"
-        ])
-        
-        with tab1:
-            display_market_analysis(results)
-        
-        with tab2:
-            display_risk_analysis(results)
-        
-        with tab3:
-            display_forecasting_analysis(results)
-        
-        with tab4:
-            display_ai_recommendation(results)
-        
-        with tab5:
-            display_financial_planning(results)
+            financial_goal = None
+            if enable_planning and goal_params:
+                financial_goal = FinancialGoal(
+                    target_amount=goal_params['target_amount'],
+                    current_amount=goal_params['current_amount'],
+                    monthly_contribution=goal_params['monthly_contribution'],
+                    time_horizon_years=goal_params['time_horizon_years'],
+                    risk_tolerance=goal_params['risk_tolerance'],
+                    age=goal_params['age'],
+                    annual_income=goal_params['annual_income'],
+                    goal_type=goal_params['goal_type']
+                )
+            
+            progress_bar.progress(30)
+            
+            # Run async pipeline
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            results = loop.run_until_complete(
+                run_pipeline(
+                    symbol=symbol,
+                    openai_api_key=openai_api_key,
+                    financial_goal=financial_goal,
+                    fred_api_key=fred_api_key,
+                    news_api_key=news_api_key,
+                    reddit_client_id=reddit_client_id,
+                    reddit_client_secret=reddit_client_secret,
+                    reddit_user_agent=reddit_user_agent
+                )
+            )
+            
+            progress_bar.progress(100)
+            
+            # Store results
+            st.session_state.analysis_results = results
+            
+            # Clear progress indicators
+            progress_placeholder.empty()
             
     except Exception as e:
-        st.error(f"Error displaying results: {str(e)}")
-        st.error("Some data may be incomplete or corrupted.")
+        st.error(f"❌ Error during analysis: {str(e)}")
+        st.error("Please check your configuration and try again.")
+    
+    finally:
+        st.session_state.analysis_running = False
+        st.rerun()
 
-def display_market_analysis(results):
-    """Display market analysis tab"""
-    st.subheader("Market Data & Technical Analysis")
+def display_results(results):
+    """Display comprehensive analysis results"""
+    
+    if not results:
+        st.warning("No analysis results available.")
+        return
+    
+    # Create tabs for different sections
+    tabs = st.tabs([
+        "📊 Overview",
+        "📈 Market Data",
+        "⚠️ Risk Analysis",
+        "🔮 Forecasting",
+        "🌍 Macro & Sentiment",
+        "🤖 AI Recommendation",
+        "💰 Financial Plan",
+        "📉 Visualizations"
+    ])
+    
+    with tabs[0]:
+        display_overview(results)
+    
+    with tabs[1]:
+        display_market_data(results)
+    
+    with tabs[2]:
+        display_risk_analysis(results)
+    
+    with tabs[3]:
+        display_forecasting(results)
+    
+    with tabs[4]:
+        display_macro_sentiment(results)
+    
+    with tabs[5]:
+        display_ai_recommendation(results)
+    
+    with tabs[6]:
+        display_financial_plan(results)
+    
+    with tabs[7]:
+        display_visualizations(results)
+
+def display_overview(results):
+    """Display overview dashboard"""
+    
+    st.header("Executive Summary")
+    
+    symbol = results.get('symbol', 'Unknown')
+    
+    # Key metrics in columns
+    col1, col2, col3, col4 = st.columns(4)
     
     if 'market_data' in results and results['market_data']:
         md = results['market_data']
-        
-        # Price chart
-        price_fig = create_price_chart(md)
-        if price_fig:
-            st.plotly_chart(price_fig, use_container_width=True)
-        
-        # Technical indicators in columns
-        col1, col2 = st.columns(2)
-        
         with col1:
-            st.markdown('<div class="metric-box">', unsafe_allow_html=True)
-            st.write("**Technical Indicators**")
-            st.write(f"• RSI: {md.rsi:.1f} {'(Oversold)' if md.rsi < 30 else '(Overbought)' if md.rsi > 70 else '(Normal)'}")
-            st.write(f"• MACD Signal: {md.macd_signal.title()}")
-            st.write(f"• Bollinger Position: {md.bollinger_position.replace('_', ' ').title()}")
-            st.write(f"• Volume Trend: {md.volume_trend.title()}")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.metric(
+                "Current Price",
+                f"${md.current_price:.2f}",
+                f"{md.return_1d:.2%}",
+                delta_color="normal"
+            )
         
         with col2:
-            st.markdown('<div class="metric-box">', unsafe_allow_html=True)
-            st.write("**Support & Resistance Levels**")
-            st.write(f"• Support Level: ${md.support_level:.2f}")
-            st.write(f"• Resistance Level: ${md.resistance_level:.2f}")
-            st.write(f"• 5-Day Return: {md.return_5d:.2%}")
-            st.write(f"• 20-Day Return: {md.return_20d:.2%}")
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Additional market insights
-        st.subheader("Market Insights")
-        insights = []
-        
-        if md.rsi < 30:
-            insights.append("📉 Stock appears oversold based on RSI, potential buying opportunity")
-        elif md.rsi > 70:
-            insights.append("📈 Stock appears overbought based on RSI, consider taking profits")
-        
-        if md.trend in ["bullish", "strongly_bullish"]:
-            insights.append("🚀 Strong upward trend detected")
-        elif md.trend in ["bearish", "strongly_bearish"]:
-            insights.append("📉 Downward trend detected, exercise caution")
-        
-        if md.volume_trend == "increasing":
-            insights.append("📊 Increasing volume supports current price movement")
-        
-        if insights:
-            for insight in insights:
-                st.info(insight)
-    else:
-        st.warning("Market data not available.")
-
-def display_risk_analysis(results):
-    """Display risk analysis tab"""
-    st.subheader("Risk Analysis")
+            st.metric(
+                "RSI",
+                f"{md.rsi:.1f}",
+                help="Relative Strength Index"
+            )
     
     if 'risk_metrics' in results and results['risk_metrics']:
         rm = results['risk_metrics']
+        with col3:
+            st.metric(
+                "Sharpe Ratio",
+                f"{rm.sharpe_ratio:.2f}",
+                help="Risk-adjusted return metric"
+            )
         
-        # Risk dashboard
-        risk_fig = create_risk_dashboard(rm)
-        if risk_fig:
-            st.plotly_chart(risk_fig, use_container_width=True)
-        
-        # Risk metrics in columns
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown('<div class="risk-box">', unsafe_allow_html=True)
-            st.write("**Portfolio Risk Metrics**")
-            st.write(f"• Volatility: {rm.portfolio_volatility:.2%}")
-            st.write(f"• Sharpe Ratio: {rm.sharpe_ratio:.3f}")
-            st.write(f"• Sortino Ratio: {rm.sortino_ratio:.3f}")
-            st.write(f"• Calmar Ratio: {rm.calmar_ratio:.3f}")
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown('<div class="risk-box">', unsafe_allow_html=True)
-            st.write("**Downside Risk Measures**")
-            st.write(f"• VaR (5%): {rm.value_at_risk_5pct:.2%}")
-            st.write(f"• VaR (1%): {rm.value_at_risk_1pct:.2%}")
-            st.write(f"• Expected Shortfall: {rm.expected_shortfall:.2%}")
-            st.write(f"• Maximum Drawdown: {rm.maximum_drawdown:.2%}")
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Risk interpretation
-        st.subheader("Risk Interpretation")
-        risk_insights = []
-        
-        if rm.sharpe_ratio > 1.5:
-            risk_insights.append("✅ Excellent risk-adjusted returns (Sharpe > 1.5)")
-        elif rm.sharpe_ratio > 1.0:
-            risk_insights.append("👍 Good risk-adjusted returns (Sharpe > 1.0)")
-        elif rm.sharpe_ratio < 0:
-            risk_insights.append("⚠️ Poor risk-adjusted returns (negative Sharpe ratio)")
-        
-        if rm.portfolio_volatility > 0.3:
-            risk_insights.append("⚠️ High volatility detected (>30%)")
-        elif rm.portfolio_volatility < 0.15:
-            risk_insights.append("✅ Low volatility, stable investment")
-        
-        if abs(rm.maximum_drawdown) > 0.2:
-            risk_insights.append("⚠️ Significant historical drawdowns (>20%)")
-        
-        for insight in risk_insights:
-            st.info(insight)
-    else:
-        st.warning("Risk metrics not available.")
-
-def display_forecasting_analysis(results):
-    """Display forecasting analysis tab"""
-    st.subheader("Forecasting Analysis")
+        with col4:
+            st.metric(
+                "Max Drawdown",
+                f"{rm.maximum_drawdown:.1%}",
+                delta_color="inverse"
+            )
     
-    if 'forecast_data' in results and results['forecast_data']:
-        fd = results['forecast_data']
-        current_price = results.get('market_data', {}).current_price if 'market_data' in results else 100
-        
-        # Forecast comparison chart
-        forecast_fig = create_forecast_comparison(fd, current_price)
-        if forecast_fig:
-            st.plotly_chart(forecast_fig, use_container_width=True)
-        
-        # Forecast details in columns
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown('<div class="metric-box">', unsafe_allow_html=True)
-            st.write("**Forecast Results**")
-            st.write(f"• Ensemble Forecast: ${fd.ensemble_forecast:.2f}")
-            price_change = ((fd.ensemble_forecast - current_price) / current_price) * 100
-            st.write(f"• Expected Change: {price_change:+.1f}%")
-            st.write(f"• Confidence: {fd.forecast_confidence:.1%}")
-            st.write(f"• Upside Probability: {fd.upside_probability:.1%}")
-            st.write(f"• Downside Risk: {fd.downside_risk:.1%}")
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown('<div class="metric-box">', unsafe_allow_html=True)
-            st.write("**Individual Model Forecasts**")
-            st.write(f"• ARIMA: ${fd.arima_forecast:.2f}")
-            st.write(f"• Prophet: ${fd.prophet_forecast:.2f}")
-            st.write(f"• LSTM: ${fd.lstm_forecast:.2f}")
-            st.write(f"• Volatility Forecast: {fd.volatility_forecast:.1%}")
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Forecast insights
-        st.subheader("Forecast Insights")
-        forecast_insights = []
-        
-        if fd.forecast_confidence > 0.7:
-            forecast_insights.append("✅ High confidence in forecast accuracy")
-        elif fd.forecast_confidence < 0.4:
-            forecast_insights.append("⚠️ Low confidence in forecast, high uncertainty")
-        
-        if fd.upside_probability > 0.6:
-            forecast_insights.append("📈 Higher probability of price increase")
-        elif fd.upside_probability < 0.4:
-            forecast_insights.append("📉 Higher probability of price decrease")
-        
-        price_change = ((fd.ensemble_forecast - current_price) / current_price) * 100
-        if abs(price_change) > 10:
-            forecast_insights.append(f"⚠️ Significant price movement expected ({price_change:+.1f}%)")
-        
-        for insight in forecast_insights:
-            st.info(insight)
-    else:
-        st.warning("Forecast data not available.")
-
-def display_ai_recommendation(results):
-    """Display AI recommendation tab"""
-    st.subheader("AI-Powered Investment Recommendation")
-    
+    # Recommendation Summary
     if 'recommendation' in results and results['recommendation']:
         rec = results['recommendation']
+        st.markdown("---")
+        st.subheader("🎯 Investment Recommendation")
         
-        # Main recommendation display
-        action_color = {"BUY": "🟢", "SELL": "🔴", "HOLD": "🟡"}
-        st.markdown(f'<div class="recommendation-box">', unsafe_allow_html=True)
-        st.markdown(f"## {action_color.get(rec.action, '⚪')} **{rec.action}** Recommendation")
+        col1, col2, col3 = st.columns([2, 1, 1])
         
-        # Key metrics in columns
-        col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("Confidence", f"{rec.confidence:.1%}")
+            color = "green" if rec.action == "BUY" else "red" if rec.action == "SELL" else "orange"
+            st.markdown(f"""
+            <div class='recommendation-box'>
+                <h3 style='color: {color};'>{rec.action}</h3>
+                <p><strong>Confidence:</strong> {rec.confidence:.1%}</p>
+                <p><strong>Risk Level:</strong> {rec.risk_level}</p>
+                <p><strong>Time Horizon:</strong> {rec.time_horizon}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
         with col2:
-            st.metric("Position Size", f"{rec.position_size:.1%}")
+            st.metric("Entry Price", f"${rec.entry_price:.2f}")
+            st.metric("Stop Loss", f"${rec.stop_loss:.2f}")
+        
         with col3:
-            st.metric("Risk Level", rec.risk_level)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Detailed recommendation info
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.write("**Entry & Exit Strategy**")
-            st.write(f"• Entry Price: ${rec.entry_price:.2f}")
-            st.write(f"• Stop Loss: ${rec.stop_loss:.2f}")
-            st.write(f"• Take Profit: ${rec.take_profit:.2f}")
-            st.write(f"• Risk/Reward Ratio: {rec.risk_reward_ratio:.2f}")
-            st.write(f"• Time Horizon: {rec.time_horizon}")
-        
-        with col2:
-            st.write("**Success Metrics**")
-            st.write(f"• Probability of Success: {rec.probability_of_success:.1%}")
-            st.write(f"• Max Drawdown Estimate: {rec.maximum_drawdown_estimate:.1%}")
-            
-            # Risk/reward assessment
-            if rec.risk_reward_ratio > 2:
-                st.success("Favorable risk/reward ratio")
-            elif rec.risk_reward_ratio < 1:
-                st.warning("Unfavorable risk/reward ratio")
-        
-        # Detailed reasoning
-        if hasattr(rec, 'detailed_reasoning') and rec.detailed_reasoning:
-            st.subheader("AI Analysis Reasoning")
-            st.write(rec.detailed_reasoning)
-        
-        # Risk and opportunity factors
-        if hasattr(rec, 'key_risk_factors') and rec.key_risk_factors:
-            col1, col2 = st.columns(2)
-            with col1:
-                st.write("**Key Risk Factors**")
-                for factor in rec.key_risk_factors[:3]:
-                    st.write(f"• {factor}")
-            
-            with col2:
-                if hasattr(rec, 'key_opportunity_factors') and rec.key_opportunity_factors:
-                    st.write("**Key Opportunities**")
-                    for factor in rec.key_opportunity_factors[:3]:
-                        st.write(f"• {factor}")
+            st.metric("Take Profit", f"${rec.take_profit:.2f}")
+            st.metric("Risk/Reward", f"{rec.risk_reward_ratio:.2f}")
+
+def display_market_data(results):
+    """Display detailed market data analysis"""
     
-    # Sentiment and macro analysis
+    st.header("Market Data Analysis")
+    
+    if 'market_data' not in results or not results['market_data']:
+        st.warning("No market data available")
+        return
+    
+    md = results['market_data']
+    
+    # Technical Indicators
     col1, col2 = st.columns(2)
     
     with col1:
-        if 'sentiment_data' in results and results['sentiment_data']:
-            sd = results['sentiment_data']
-            st.subheader("Market Sentiment")
-            
-            sentiment_fig = create_sentiment_pie(sd)
-            if sentiment_fig:
-                st.plotly_chart(sentiment_fig, use_container_width=True)
-            
-            st.write(f"**Overall Sentiment:** {sd.sentiment_trend.title()}")
-            st.write(f"**News Sentiment:** {sd.news_sentiment:.2f}")
-            st.write(f"**Social Media Sentiment:** {sd.social_media_sentiment:.2f}")
-            st.write(f"**Fear & Greed Index:** {sd.fear_greed_index:.0f}")
-            if sd.key_topics:
-                st.write(f"**Key Topics:** {', '.join(sd.key_topics[:3])}")
+        st.subheader("📊 Price Metrics")
+        metrics_df = pd.DataFrame({
+            'Metric': ['Current Price', '1-Day Return', '5-Day Return', '20-Day Return', 
+                      'Support Level', 'Resistance Level'],
+            'Value': [
+                f"${md.current_price:.2f}",
+                f"{md.return_1d:.2%}",
+                f"{md.return_5d:.2%}",
+                f"{md.return_20d:.2%}",
+                f"${md.support_level:.2f}",
+                f"${md.resistance_level:.2f}"
+            ]
+        })
+        st.dataframe(metrics_df, hide_index=True, use_container_width=True)
     
     with col2:
-        if 'macro_data' in results and results['macro_data']:
-            st.subheader("Macroeconomic Environment")
-            macro = results['macro_data']
-            
-            st.metric("GDP Growth", f"{macro.gdp_growth:.1f}%")
-            st.metric("Inflation Rate", f"{macro.inflation_rate:.1f}%")
-            st.metric("Unemployment", f"{macro.unemployment_rate:.1f}%")
-            st.metric("Fed Funds Rate", f"{macro.federal_funds_rate:.2f}%")
-            st.metric("VIX", f"{macro.vix:.1f}")
-
-def display_financial_planning(results):
-    """Display financial planning tab"""
-    st.subheader("Financial Planning Analysis")
+        st.subheader("📈 Technical Indicators")
+        indicators_df = pd.DataFrame({
+            'Indicator': ['RSI', 'Trend', 'MACD Signal', 'Bollinger Position', 
+                         'Volume Trend', '20-Day Volatility'],
+            'Value': [
+                f"{md.rsi:.1f}",
+                md.trend,
+                md.macd_signal,
+                md.bollinger_position,
+                md.volume_trend,
+                f"{md.volatility_20d:.1%}"
+            ]
+        })
+        st.dataframe(indicators_df, hide_index=True, use_container_width=True)
     
-    if 'financial_plan' in results and results['financial_plan']:
-        plan = results['financial_plan']
+    # Price Chart
+    if hasattr(md, 'prices') and len(md.prices) > 0:
+        st.subheader("📉 Price History")
         
-        # Plan summary metrics
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Success Probability", f"{plan.success_probability:.1%}")
-        with col2:
-            st.metric("Projected Value", f"${plan.projected_value:,.0f}")
-        with col3:
-            st.metric("Target Amount", f"${plan.goal.target_amount:,.0f}")
-        with col4:
-            success_color = "normal" if plan.success_probability > 0.8 else "inverse"
-            gap = plan.goal.target_amount - plan.projected_value
-            st.metric("Gap", f"${gap:,.0f}", delta_color=success_color)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=md.prices.index,
+            y=md.prices.values,
+            mode='lines',
+            name='Price',
+            line=dict(color='blue', width=2)
+        ))
         
-        # Asset allocation visualization
-        st.subheader("Recommended Asset Allocation")
-        allocation_fig = create_asset_allocation_chart(plan.asset_allocation)
-        if allocation_fig:
-            st.plotly_chart(allocation_fig, use_container_width=True)
+        fig.add_hline(y=md.support_level, line_dash="dash", 
+                     line_color="green", annotation_text="Support")
+        fig.add_hline(y=md.resistance_level, line_dash="dash", 
+                     line_color="red", annotation_text="Resistance")
         
-        # Detailed allocation table
-        allocation_df = pd.DataFrame.from_dict(plan.asset_allocation, orient='index', columns=['Allocation %'])
-        allocation_df['Allocation %'] = allocation_df['Allocation %'] * 100
-        allocation_df['Monthly ] = allocation_df['Allocation %'] / 100 * plan.goal.monthly_contribution
-        allocation_df.index = [idx.replace('_', ' ').title() for idx in allocation_df.index]
-        st.dataframe(allocation_df, use_container_width=True)
+        fig.update_layout(
+            title=f"{results.get('symbol', 'Stock')} Price Chart",
+            xaxis_title="Date",
+            yaxis_title="Price ($)",
+            height=400
+        )
         
-        # Plan metrics
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("Plan Risk Metrics")
-            st.write(f"**Plan Sharpe Ratio:** {plan.plan_sharpe_ratio:.2f}")
-            st.write(f"**Expected Volatility:** {plan.plan_volatility:.1%}")
-            st.write(f"**Est. Max Drawdown:** {plan.plan_max_drawdown:.1%}")
-        
-        with col2:
-            st.subheader("Tax Optimization")
-            if plan.tax_optimization:
-                for key, value in plan.tax_optimization.items():
-                    if 'monthly' in key:
-                        st.write(f"**{key.replace('_', ' ').title()}:** ${value:,.0f}")
-        
-        # Monte Carlo results
-        if plan.monte_carlo_results:
-            st.subheader("Monte Carlo Simulation Results")
-            mc = plan.monte_carlo_results
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Expected Value", f"${mc.get('mean', 0):,.0f}")
-            with col2:
-                st.metric("Success Rate", f"{mc.get('success_rate', 0):.1%}")
-            with col3:
-                st.metric("90th Percentile", f"${mc.get('percentile_90', 0):,.0f}")
-        
-        # Recommendations
-        st.subheader("Planning Recommendations")
-        for i, rec in enumerate(plan.recommendations, 1):
-            st.write(f"{i}. {rec}")
-        
-        # Plan insights
-        st.subheader("Plan Insights")
-        insights = []
-        
-        if plan.success_probability > 0.8:
-            insights.append("Your financial goal appears highly achievable with the current plan")
-        elif plan.success_probability < 0.5:
-            insights.append("Consider increasing contributions or extending timeline to improve success probability")
-        
-        if plan.plan_sharpe_ratio > 1.0:
-            insights.append("Excellent risk-adjusted returns expected from the recommended allocation")
-        
-        if plan.goal.age < 35:
-            insights.append("Young investor advantage: time is your greatest asset for wealth building")
-        elif plan.goal.age > 50:
-            insights.append("Consider focusing on risk management while maintaining growth potential")
-        
-        for insight in insights:
-            st.info(insight)
-    else:
-        st.info("Financial planning analysis not available. Enable it in the sidebar to see detailed planning results.")
-        
-        # Show what financial planning includes
-        with st.expander("What's included in Financial Planning?"):
-            st.markdown("""
-            - **Goal Achievement Analysis**: Probability of reaching your target
-            - **Asset Allocation Optimization**: Risk-adjusted portfolio recommendations
-            - **Monte Carlo Simulation**: Statistical modeling of potential outcomes
-            - **Tax Optimization**: Strategies to minimize tax burden
-            - **Risk Assessment**: Plan-level risk metrics and drawdown estimates
-            - **Actionable Recommendations**: Specific steps to improve your plan
-            """)
+        st.plotly_chart(fig, use_container_width=True)
 
-if __name__ == "__main__":
-    main()
+def display_risk_analysis(results):
+    """Display risk analysis results"""
+    
+    st.header("Risk Analysis")
+    
+    if 'risk_metrics' not in results or not results['risk_metrics']:
+        st.warning("No risk metrics available")
+        return
+    
+    rm = results['risk_metrics']
+    
+    # Risk Metrics Overview
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("Portfolio Volatility", f"{rm.portfolio_volatility:.1%}")
+        st.metric("VaR (5%)", f"{rm.value_at_risk_5pct:.2%}")
+    
+    with col2:
+        st.metric("Sharpe Ratio", f"{rm.sharpe_ratio:.2f}")
+        st.metric("Expected Shortfall", f"{rm.expected_shortfall:.2%}")
