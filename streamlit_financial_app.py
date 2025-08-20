@@ -249,31 +249,18 @@ def main():
         # Run the analysis
         with st.spinner(f"🔍 Analyzing {symbol}... This may take a moment."):
             try:
-                # Check which pipeline function is available
-                if hasattr(globals().get('Final_GENAI_V3', {}), 'run_pipeline_sync'):
-                    # Use the async version
-                    results = await run_pipeline_sync(
-                        symbol=symbol,
-                        openai_api_key=openai_key if openai_key else None,
-                        financial_goal=financial_goal
-                    )
-                elif hasattr(globals().get('Final_GENAI_V3', {}), 'run_pipeline'):
-                    # Use the regular pipeline function
-                    results = asyncio.run(run_pipeline(
-                        symbol=symbol,
-                        openai_api_key=openai_key if openai_key else None,
-                        financial_goal=financial_goal
-                    ))
-                else:
-                    # Fallback: run individual agents
-                    results = await run_manual_pipeline(symbol, openai_key, financial_goal)
+                # Run pipeline synchronously using asyncio.run()
+                results = run_analysis_pipeline(symbol, openai_key, financial_goal)
                 
                 # Display results
-                display_analysis_results(results)
-                
-                # Add download option
-                st.markdown("---")
-                create_download_link(results)
+                if results:
+                    display_analysis_results(results)
+                    
+                    # Add download option
+                    st.markdown("---")
+                    create_download_link(results)
+                else:
+                    st.error("❌ No results returned from analysis")
                 
             except Exception as e:
                 st.error(f"❌ Analysis failed: {str(e)}")
@@ -293,6 +280,87 @@ def main():
         # Welcome screen
         display_welcome_screen()
 
+def run_analysis_pipeline(symbol, openai_key, financial_goal):
+    """
+    Synchronous wrapper for running the analysis pipeline
+    """
+    try:
+        # Apply nest_asyncio to handle event loop in Streamlit
+        nest_asyncio.apply()
+        
+        # Try different pipeline functions in order of preference
+        if 'run_pipeline_sync' in globals():
+            # Use async version with asyncio.run
+            return asyncio.run(run_pipeline_sync(
+                symbol=symbol,
+                openai_api_key=openai_key if openai_key else None,
+                financial_goal=financial_goal
+            ))
+        elif 'run_pipeline' in globals():
+            # Use regular pipeline function
+            return asyncio.run(run_pipeline(
+                symbol=symbol,
+                openai_api_key=openai_key if openai_key else None,
+                financial_goal=financial_goal
+            ))
+        else:
+            # Fallback: run manual pipeline
+            return asyncio.run(run_manual_pipeline_sync(symbol, openai_key, financial_goal))
+            
+    except Exception as e:
+        st.error(f"Pipeline execution error: {str(e)}")
+        return None
+
+def run_manual_pipeline_sync(symbol, openai_key, financial_goal):
+    """
+    Synchronous version of manual pipeline execution
+    """
+    async def _async_manual_pipeline():
+        state = {}
+        
+        try:
+            # Initialize agents
+            market_agent = MarketDataAgent()
+            risk_agent = RiskAgent() 
+            forecast_agent = ForecastingAgent()
+            macro_agent = MacroEconomicAgent()
+            sentiment_agent = SentimentAgent()
+            strategist_agent = StrategistAgent(api_key=openai_key)
+            
+            # Run agents in sequence
+            st.write("📊 Fetching market data...")
+            state = await market_agent.process(state, symbol=symbol, period="1y")
+            
+            st.write("⚠️ Analyzing risk metrics...")
+            state = await risk_agent.process(state)
+            
+            st.write("🔮 Generating forecasts...")
+            state = await forecast_agent.process(state, forecast_horizon=5)
+            
+            st.write("🌍 Analyzing macro environment...")
+            state = await macro_agent.process(state)
+            
+            st.write("💭 Analyzing sentiment...")
+            state = await sentiment_agent.process(state)
+            
+            st.write("🧠 Generating AI recommendation...")
+            state = await strategist_agent.process(state)
+            
+            # Add financial planning if goal provided
+            if financial_goal:
+                st.write("💰 Creating financial plan...")
+                planner_agent = FinancialPlannerAgent()
+                state = await planner_agent.process(state, financial_goal)
+            
+            return state
+            
+        except Exception as e:
+            st.error(f"Manual pipeline failed: {str(e)}")
+            return {}
+    
+    return asyncio.run(_async_manual_pipeline())
+
+async def run_manual_pipeline(symbol, openai_key, financial_goal):
 async def run_manual_pipeline(symbol, openai_key, financial_goal):
     """
     Manual pipeline execution as fallback if main pipeline functions aren't available
