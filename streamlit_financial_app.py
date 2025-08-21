@@ -138,6 +138,32 @@ class FinancialPlan:
     monte_carlo_results: Dict[str, float]
     plan_sharpe_ratio: float = 0.0
 
+@dataclass
+class InvestmentRecommendation:
+    symbol: str
+    name: str
+    asset_class: str
+    allocation_percentage: float
+    expense_ratio: float
+    description: str
+    why_recommended: str
+    risk_level: str
+
+@dataclass
+class DetailedFinancialPlan:
+    goal: FinancialGoal
+    projected_value: float
+    success_probability: float
+    required_monthly: float
+    asset_allocation: Dict[str, float]
+    specific_investments: List[InvestmentRecommendation]
+    recommendations: List[str]
+    is_achievable: bool
+    monte_carlo_results: Dict[str, float]
+    plan_sharpe_ratio: float
+    rebalancing_schedule: str
+    tax_considerations: List[str]
+
 # Market Data Agent
 class MarketDataAgent:
     def __init__(self):
@@ -756,6 +782,345 @@ class StrategistAgent:
             detailed_reasoning="Default recommendation due to analysis error",
             risk_reward_ratio=1.0
         )
+
+class EnhancedFinancialPlannerAgent:
+    def __init__(self):
+        self.name = "EnhancedFinancialPlannerAgent"
+        
+        # Asset allocation strategies
+        self.strategies = {
+            "conservative": {"stocks": 0.30, "bonds": 0.60, "cash": 0.10},
+            "moderate": {"stocks": 0.60, "bonds": 0.30, "cash": 0.10},
+            "aggressive": {"stocks": 0.80, "bonds": 0.15, "cash": 0.05}
+        }
+        
+        # Expected returns and volatilities
+        self.asset_assumptions = {
+            "stocks": {"return": 0.10, "volatility": 0.16},
+            "bonds": {"return": 0.04, "volatility": 0.06},
+            "cash": {"return": 0.02, "volatility": 0.01}
+        }
+        
+        # Specific investment options database
+        self.investment_options = {
+            "stocks": {
+                "large_cap": [
+                    {
+                        "symbol": "VTI",
+                        "name": "Vanguard Total Stock Market ETF",
+                        "expense_ratio": 0.03,
+                        "description": "Broad US stock market exposure",
+                        "why_recommended": "Low cost, diversified exposure to entire US stock market",
+                        "risk_level": "Medium"
+                    },
+                    {
+                        "symbol": "FXAIX",
+                        "name": "Fidelity 500 Index Fund",
+                        "expense_ratio": 0.015,
+                        "description": "S&P 500 index fund",
+                        "why_recommended": "Ultra-low cost access to largest US companies",
+                        "risk_level": "Medium"
+                    },
+                    {
+                        "symbol": "SCHX",
+                        "name": "Schwab US Large-Cap ETF",
+                        "expense_ratio": 0.03,
+                        "description": "US large-cap stock exposure",
+                        "why_recommended": "Excellent diversification at rock-bottom cost",
+                        "risk_level": "Medium"
+                    }
+                ],
+                "international": [
+                    {
+                        "symbol": "VTIAX",
+                        "name": "Vanguard Total International Stock Index",
+                        "expense_ratio": 0.11,
+                        "description": "International developed and emerging markets",
+                        "why_recommended": "Global diversification outside US markets",
+                        "risk_level": "Medium-High"
+                    },
+                    {
+                        "symbol": "FTIHX",
+                        "name": "Fidelity Total International Index",
+                        "expense_ratio": 0.06,
+                        "description": "International stock market exposure",
+                        "why_recommended": "Low-cost international diversification",
+                        "risk_level": "Medium-High"
+                    }
+                ],
+                "growth": [
+                    {
+                        "symbol": "VUG",
+                        "name": "Vanguard Growth ETF",
+                        "expense_ratio": 0.04,
+                        "description": "US growth stocks",
+                        "why_recommended": "Focus on companies with above-average growth potential",
+                        "risk_level": "Medium-High"
+                    },
+                    {
+                        "symbol": "QQQ",
+                        "name": "Invesco QQQ Trust",
+                        "expense_ratio": 0.20,
+                        "description": "Nasdaq 100 technology focus",
+                        "why_recommended": "Tech-heavy growth exposure for younger investors",
+                        "risk_level": "High"
+                    }
+                ]
+            },
+            "bonds": {
+                "total_market": [
+                    {
+                        "symbol": "BND",
+                        "name": "Vanguard Total Bond Market ETF",
+                        "expense_ratio": 0.03,
+                        "description": "US investment-grade bonds",
+                        "why_recommended": "Comprehensive bond market exposure at low cost",
+                        "risk_level": "Low"
+                    },
+                    {
+                        "symbol": "FXNAX",
+                        "name": "Fidelity US Bond Index Fund",
+                        "expense_ratio": 0.025,
+                        "description": "Broad US bond market",
+                        "why_recommended": "Ultra-low cost bond diversification",
+                        "risk_level": "Low"
+                    }
+                ],
+                "treasury": [
+                    {
+                        "symbol": "VGIT",
+                        "name": "Vanguard Intermediate-Term Treasury ETF",
+                        "expense_ratio": 0.04,
+                        "description": "US Treasury bonds 3-10 years",
+                        "why_recommended": "Government-backed safety with moderate duration",
+                        "risk_level": "Very Low"
+                    },
+                    {
+                        "symbol": "SHY",
+                        "name": "iShares 1-3 Year Treasury Bond ETF",
+                        "expense_ratio": 0.15,
+                        "description": "Short-term Treasury bonds",
+                        "why_recommended": "Low interest rate risk, high safety",
+                        "risk_level": "Very Low"
+                    }
+                ],
+                "tips": [
+                    {
+                        "symbol": "VTEB",
+                        "name": "Vanguard Tax-Exempt Bond ETF",
+                        "expense_ratio": 0.05,
+                        "description": "Tax-free municipal bonds",
+                        "why_recommended": "Tax advantages for high-income investors",
+                        "risk_level": "Low"
+                    },
+                    {
+                        "symbol": "SCHZ",
+                        "name": "Schwab Intermediate-Term Treasury ETF",
+                        "expense_ratio": 0.03,
+                        "description": "Inflation-protected securities",
+                        "why_recommended": "Protection against inflation risk",
+                        "risk_level": "Low"
+                    }
+                ]
+            },
+            "cash": [
+                {
+                    "symbol": "VMOT",
+                    "name": "Vanguard Ultra-Short-Term Bond ETF",
+                    "expense_ratio": 0.10,
+                    "description": "Ultra-short duration bonds",
+                    "why_recommended": "Cash-like stability with slightly higher yield",
+                    "risk_level": "Very Low"
+                },
+                {
+                    "symbol": "SGOV",
+                    "name": "iShares 0-3 Month Treasury Bond ETF",
+                    "expense_ratio": 0.09,
+                    "description": "Very short-term Treasuries",
+                    "why_recommended": "Highest safety and liquidity",
+                    "risk_level": "Very Low"
+                },
+                {
+                    "symbol": "HYSA",
+                    "name": "High-Yield Savings Account",
+                    "expense_ratio": 0.00,
+                    "description": "FDIC-insured savings account",
+                    "why_recommended": "Emergency fund, guaranteed principal protection",
+                    "risk_level": "None"
+                }
+            ]
+        }
+
+    async def process(self, goal: FinancialGoal) -> DetailedFinancialPlan:
+        try:
+            st.write(f"💰 {self.name}: Creating detailed financial plan with specific investments...")
+            
+            # Calculate projections
+            projections = self._calculate_projections(goal)
+            
+            # Optimize asset allocation
+            asset_allocation = self._optimize_allocation(goal)
+            
+            # Generate specific investment recommendations
+            specific_investments = self._generate_specific_investments(goal, asset_allocation)
+            
+            # Calculate plan metrics
+            plan_sharpe = self._calculate_plan_sharpe(asset_allocation)
+            
+            # Run Monte Carlo simulation
+            monte_carlo = self._run_monte_carlo(goal, asset_allocation, 1000)
+            
+            # Generate recommendations
+            recommendations = self._generate_recommendations(goal, projections, monte_carlo)
+            
+            # Generate tax considerations
+            tax_considerations = self._generate_tax_considerations(goal, specific_investments)
+            
+            # Determine rebalancing schedule
+            rebalancing_schedule = self._determine_rebalancing_schedule(goal)
+            
+            return DetailedFinancialPlan(
+                goal=goal,
+                projected_value=projections['projected_value'],
+                success_probability=projections['success_probability'],
+                required_monthly=projections['required_monthly'],
+                asset_allocation=asset_allocation,
+                specific_investments=specific_investments,
+                recommendations=recommendations,
+                is_achievable=projections['is_achievable'],
+                monte_carlo_results=monte_carlo,
+                plan_sharpe_ratio=plan_sharpe,
+                rebalancing_schedule=rebalancing_schedule,
+                tax_considerations=tax_considerations
+            )
+            
+        except Exception as e:
+            st.error(f"Error creating detailed financial plan: {e}")
+            return None
+
+    def _generate_specific_investments(self, goal: FinancialGoal, allocation: Dict[str, float]) -> List[InvestmentRecommendation]:
+        """Generate specific investment recommendations based on allocation and investor profile"""
+        
+        recommendations = []
+        
+        # Stock allocation
+        stock_allocation = allocation.get("stocks", 0)
+        if stock_allocation > 0:
+            # Determine stock strategy based on age and risk tolerance
+            if goal.age < 35 and goal.risk_tolerance == "aggressive":
+                # Young aggressive: Growth + International
+                stock_options = (
+                    self.investment_options["stocks"]["growth"][:1] + 
+                    self.investment_options["stocks"]["large_cap"][:1] +
+                    self.investment_options["stocks"]["international"][:1]
+                )
+                stock_weights = [0.4, 0.4, 0.2]  # 40% growth, 40% broad market, 20% international
+            elif goal.age < 50:
+                # Middle age: Balanced approach
+                stock_options = (
+                    self.investment_options["stocks"]["large_cap"][:2] +
+                    self.investment_options["stocks"]["international"][:1]
+                )
+                stock_weights = [0.5, 0.3, 0.2]  # 50% large cap, 30% large cap alt, 20% international
+            else:
+                # Older: More conservative stock allocation
+                stock_options = self.investment_options["stocks"]["large_cap"][:2]
+                stock_weights = [0.7, 0.3]  # 70% primary, 30% secondary
+            
+            for i, option in enumerate(stock_options):
+                weight = stock_weights[i] if i < len(stock_weights) else 0
+                recommendations.append(InvestmentRecommendation(
+                    symbol=option["symbol"],
+                    name=option["name"],
+                    asset_class="stocks",
+                    allocation_percentage=stock_allocation * weight,
+                    expense_ratio=option["expense_ratio"],
+                    description=option["description"],
+                    why_recommended=option["why_recommended"],
+                    risk_level=option["risk_level"]
+                ))
+        
+        # Bond allocation
+        bond_allocation = allocation.get("bonds", 0)
+        if bond_allocation > 0:
+            if goal.risk_tolerance == "conservative" or goal.age > 50:
+                # Conservative: Treasury focus
+                bond_options = (
+                    self.investment_options["bonds"]["treasury"][:1] +
+                    self.investment_options["bonds"]["total_market"][:1]
+                )
+                bond_weights = [0.6, 0.4]  # 60% treasury, 40% total market
+            else:
+                # Moderate/Aggressive: Total market focus
+                bond_options = (
+                    self.investment_options["bonds"]["total_market"][:1] +
+                    self.investment_options["bonds"]["tips"][:1]
+                )
+                bond_weights = [0.7, 0.3]  # 70% total market, 30% inflation protected
+            
+            for i, option in enumerate(bond_options):
+                weight = bond_weights[i] if i < len(bond_weights) else 0
+                recommendations.append(InvestmentRecommendation(
+                    symbol=option["symbol"],
+                    name=option["name"],
+                    asset_class="bonds",
+                    allocation_percentage=bond_allocation * weight,
+                    expense_ratio=option["expense_ratio"],
+                    description=option["description"],
+                    why_recommended=option["why_recommended"],
+                    risk_level=option["risk_level"]
+                ))
+        
+        # Cash allocation
+        cash_allocation = allocation.get("cash", 0)
+        if cash_allocation > 0:
+            cash_option = self.investment_options["cash"][0]  # Primary cash option
+            recommendations.append(InvestmentRecommendation(
+                symbol=cash_option["symbol"],
+                name=cash_option["name"],
+                asset_class="cash",
+                allocation_percentage=cash_allocation,
+                expense_ratio=cash_option["expense_ratio"],
+                description=cash_option["description"],
+                why_recommended=cash_option["why_recommended"],
+                risk_level=cash_option["risk_level"]
+            ))
+        
+        return recommendations
+
+    def _generate_tax_considerations(self, goal: FinancialGoal, investments: List[InvestmentRecommendation]) -> List[str]:
+        """Generate tax optimization recommendations"""
+        
+        considerations = []
+        
+        # Tax-advantaged account recommendations
+        if goal.goal_type == "retirement":
+            considerations.append("🏦 Maximize 401(k) contributions, especially if employer match available")
+            considerations.append("🎯 Consider Roth IRA for tax-free growth if income allows")
+            considerations.append("📊 Use traditional IRA for current tax deduction if in high tax bracket")
+        
+        # Tax-efficient fund placement
+        considerations.append("💰 Hold tax-inefficient investments in tax-advantaged accounts")
+        considerations.append("📈 Keep broad market index funds in taxable accounts (tax-efficient)")
+        
+        # Municipal bonds for high earners
+        if goal.annual_income > 100000:
+            considerations.append("🏛️ Consider municipal bonds for tax-free income")
+        
+        # Tax-loss harvesting
+        considerations.append("📉 Use tax-loss harvesting in taxable accounts to offset gains")
+        
+        return considerations
+
+    def _determine_rebalancing_schedule(self, goal: FinancialGoal) -> str:
+        """Determine optimal rebalancing frequency"""
+        
+        if goal.time_horizon_years > 20:
+            return "Annually (long-term goals benefit from less frequent rebalancing)"
+        elif goal.time_horizon_years > 10:
+            return "Semi-annually (balanced approach for medium-term goals)"
+        else:
+            return "Quarterly (shorter timelines need more active management)"
 
 # Financial Planning Agent
 class FinancialPlannerAgent:
