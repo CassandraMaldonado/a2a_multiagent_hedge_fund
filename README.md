@@ -24,6 +24,16 @@ There’s also an in-progress **FinancePlannerNode** that takes user goals (e.g.
 
 The project is built around modular agents that pass and update a shared `AgentState` — similar to how LangGraph or CrewAI works.
 
+## Architecture
+**Seven agents with a shared, typed Agent State:**
+- **Market Data** -> OHLCV, returns, RSI, volatility, trend, support/resistance  
+- **Sentiment** -> News headlines polarity & volume (heuristic fallback if no key)  
+- **Macro Econ** -> FRED: GDP, inflation, unemployment, yield curve, VIX; macro “bull/neutral/bear”  
+- **Forecasting** -> Prophet (if installed) + ARIMA-style smoothing fallback; **ensemble** with volatility-aware confidence  
+- **Risk** → Volatility-aware down-weighting; drawdown/Sharpe/VAR style metrics  
+- **Strategist** -> GPT-powered (or rule-based fallback) that outputs action, confidence, position size, risk level, horizon, and reasoning  
+- **Financial Planner** -> Contributions/FV, Monte Carlo probability of reaching a target
+
 | Agent | Role |
 |-------|------|
 | `MarketDataNode` | Fetch OHLCV price data |
