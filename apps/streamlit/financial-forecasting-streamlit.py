@@ -2834,7 +2834,7 @@ def run_analysis_pipeline(symbol, period, api_key, enable_planning, goal_params)
             progress_bar.progress(10)
             
             # Import and create goal if planning enabled
-            from Final_GENAI_V3 import FinancialGoal
+            from legacy.Final_GENAI_V3 import FinancialGoal
             
             financial_goal = None
             if enable_planning and goal_params:
@@ -2854,7 +2854,7 @@ def run_analysis_pipeline(symbol, period, api_key, enable_planning, goal_params)
             progress_bar.progress(30)
             
             # Import and run the pipeline
-            from Final_GENAI_V3 import run_pipeline
+            from legacy.Final_GENAI_V3 import run_pipeline
             
             # Run async pipeline
             loop = asyncio.new_event_loop()
