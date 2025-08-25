@@ -4,7 +4,7 @@ _Agents for market forecasting, strategy and personal financial planning._
 I built this project in the UChicago MS-ADS program to explore how agentic workflows + classical time-series models + LLM reasoning can work together for transparent investing and goal-based planning. It’s a 7-agent async pipeline that integrates Yahoo Finance, FRED and News APIs, then explains decisions in plain language.
 
 
-## Recruiter Snapshot (what I actually shipped)
+## 
 - **7 agents with shared state**: Market, Sentiment, Macro, Forecasting (Prophet + ARIMA-style fallback), Risk, Strategist (GPT or rules), and a Financial Planner. :contentReference[oaicite:1]{index=1}  
 - **Ensemble forecasting** with volatility-aware confidence; robust to missing optional deps (graceful fallbacks). :contentReference[oaicite:2]{index=2}  
 - **Personal planning**: contributions, projected growth, and Monte Carlo success probability. :contentReference[oaicite:3]{index=3}  
@@ -12,7 +12,7 @@ I built this project in the UChicago MS-ADS program to explore how agentic workf
 - **Live app demo** (Streamlit): https://a2amultiagenthedgefund-7jxenesgsrcamwahzhhbuf.streamlit.app/ :contentReference[oaicite:5]{index=5}
 
 
-## Why this matters (and what I wanted to learn)
+## Why this matters
 Retail tools feel like black boxes—generic templates, unclear logic, and fragmented data. I wanted a system that **personalizes**, **justifies** its calls (buy/sell/hold & planning), and stays **robust** when APIs/LLMs aren’t available. :contentReference[oaicite:6]{index=6}
 
 
