@@ -1,7 +1,7 @@
 # GenAI Multi-Agent Hedge Fund
-_A2A/LangGraph-style agents for market forecasting, strategy, and personal financial planning_
+_Agents for market forecasting, strategy and personal financial planning._
 
-I built this project in the UChicago MS-ADS program to explore how **agentic workflows** + **classical time-series models** + **LLM reasoning** can work together for transparent investing and goal-based planning. It’s a 7-agent async pipeline that integrates Yahoo Finance, FRED, and News APIs, then explains decisions in plain language. :contentReference[oaicite:0]{index=0}
+I built this project in the UChicago MS-ADS program to explore how agentic workflows + classical time-series models + LLM reasoning can work together for transparent investing and goal-based planning. It’s a 7-agent async pipeline that integrates Yahoo Finance, FRED, and News APIs, then explains decisions in plain language. :contentReference[oaicite:0]{index=0}
 
 
 ## Recruiter Snapshot (what I actually shipped)
