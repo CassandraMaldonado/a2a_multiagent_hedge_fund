@@ -1,91 +1,62 @@
-# GenAI Financial Forecaster: A Personal Agentic AI Project
+# GenAI Multi-Agent Hedge Fund
+_A2A/LangGraph-style agents for market forecasting, strategy, and personal financial planning_
 
-This is a personal project I built as part of my Master’s in Applied Data Science at the University of Chicago. The goal was to explore how agentic workflows and generative AI can be used to support financial decision-making — from market forecasting to personal investment planning.
-
-While inspired by open-source repos like `ai-hedge-fund`, I wanted to better understand the inner workings by building my own version using modular agents, real APIs, and LLM reasoning.
-
----
-
-## What It Does
-
-This system simulates a simplified investment assistant that takes in:
-- Real-time market data
-- Sentiment from Reddit, News, Twitter
-- Macroeconomic indicators (via FRED)
-- Forecasts future price movements (via ARIMA, Prophet, LSTM)
-- Assesses risk and market regime
-- Uses an LLM to generate a final recommendation (buy/sell/hold)
-
-There’s also an in-progress **FinancePlannerNode** that takes user goals (e.g., retirement target in 10 years) and outputs a personalized investment plan.
+I built this project in the UChicago MS-ADS program to explore how **agentic workflows** + **classical time-series models** + **LLM reasoning** can work together for transparent investing and goal-based planning. It’s a 7-agent async pipeline that integrates Yahoo Finance, FRED, and News APIs, then explains decisions in plain language. :contentReference[oaicite:0]{index=0}
 
 ---
 
-## Agentic Workflow
-
-The project is built around modular agents that pass and update a shared `AgentState` — similar to how LangGraph or CrewAI works.
-
-## Architecture
-**Seven agents with a shared, typed Agent State:**
-- **Market Data** -> OHLCV, returns, RSI, volatility, trend, support/resistance  
-- **Sentiment** -> News headlines polarity & volume (heuristic fallback if no key)  
-- **Macro Econ** -> FRED: GDP, inflation, unemployment, yield curve, VIX; macro “bull/neutral/bear”  
-- **Forecasting** -> Prophet (if installed) + ARIMA-style smoothing fallback; **ensemble** with volatility-aware confidence  
-- **Risk** → Volatility-aware down-weighting; drawdown/Sharpe/VAR style metrics  
-- **Strategist** -> GPT-powered (or rule-based fallback) that outputs action, confidence, position size, risk level, horizon, and reasoning  
-- **Financial Planner** -> Contributions/FV, Monte Carlo probability of reaching a target
-
-| Agent | Role |
-|-------|------|
-| `MarketDataNode` | Fetch OHLCV price data |
-| `SentimentNode` | Analyze financial sentiment using real Reddit/News |
-| `MacroEconNode` | Pull macro indicators (GDP, inflation, rates) from FRED |
-| `ForecastingNode` | Use ARIMA, Prophet, LSTM to predict prices |
-| `RiskNode` | (In progress) Calculate Sharpe Ratio, volatility, drawdown |
-| `StrategistAgent` | (In progress) Uses GPT to give a trading recommendation |
-| `FinancePlannerNode` | (In progress) Suggests how much to invest monthly to hit goals |
+## Recruiter Snapshot (what I actually shipped)
+- **7 agents with shared state**: Market, Sentiment, Macro, Forecasting (Prophet + ARIMA-style fallback), Risk, Strategist (GPT or rules), and a Financial Planner. :contentReference[oaicite:1]{index=1}  
+- **Ensemble forecasting** with volatility-aware confidence; robust to missing optional deps (graceful fallbacks). :contentReference[oaicite:2]{index=2}  
+- **Personal planning**: contributions, projected growth, and Monte Carlo success probability. :contentReference[oaicite:3]{index=3}  
+- **Results (AAPL, 30-day backtest)**: Prophet MAE **2.1** / RMSE **2.8**; Fallback MAE **3.4** / RMSE **4.7**; **Ensemble** MAE **2.0** / RMSE **2.6**. :contentReference[oaicite:4]{index=4}  
+- **Live app demo** (Streamlit): https://a2amultiagenthedgefund-7jxenesgsrcamwahzhhbuf.streamlit.app/ :contentReference[oaicite:5]{index=5}
 
 ---
 
-## Real Integrations
-
-This project connects to real APIs:
-
-- [x] Yahoo Finance (via yfinance)
-- [x] Binance
-- [x] FRED (Federal Reserve)
-- [x] NewsAPI / GNews
-- [x] Reddit (via PRAW)
-- [x] OpenAI GPT-4 (for reasoning)
+## Why this matters (and what I wanted to learn)
+Retail tools feel like black boxes—generic templates, unclear logic, and fragmented data. I wanted a system that **personalizes**, **justifies** its calls (buy/sell/hold & planning), and stays **robust** when APIs/LLMs aren’t available. :contentReference[oaicite:6]{index=6}
 
 ---
 
-## Streamlit Dashboard (Coming Soon)
+## Architecture (7 agents, one shared typed state)
+- **Market Data** → OHLCV, returns, RSI, volatility, support/resistance  
+- **Sentiment** → News headline polarity + volume (heuristic fallback)  
+- **Macro Econ** → FRED indicators (GDP, CPI, unemployment, yield curve, VIX)  
+- **Forecasting** → Prophet + ARIMA-style fallback → **ensemble** w/ volatility-weighted confidence  
+- **Risk** → down-weights forecast confidence under high volatility  
+- **Strategist** → GPT-4 when key present; otherwise **transparent rule-based** schema  
+- **Financial Planner** → monthly contributions, projected FV, Monte Carlo success  
+All agents read/write a common **Agent State** for modularity and traceability. :contentReference[oaicite:7]{index=7}
 
-A front-end dashboard is being developed using Streamlit to show:
-- Forecasts vs actual prices
-- Sentiment trends
-- Macro regime
-- Final LLM recommendation
-- Personal investment plan
-
----
-
-## Why I Built This
-
-I wanted to go beyond traditional modeling and explore how AI agents can collaborate across domains — economics, NLP, time series — and build toward an assistant that feels more adaptive and insightful.
-
-This is still a work-in-progress, but I’ve learned a lot about:
-- Agent architecture
-- API orchestration
-- Prompt engineering
-- Real-world data cleaning
-- Model evaluation
+**Example strategist schema**: action, confidence, position size, risk level, horizon, reasoning. :contentReference[oaicite:8]{index=8}
 
 ---
 
-## How to Run
+## Data & preprocessing
+- **Markets**: Yahoo Finance OHLCV aligned to daily; missing values handled  
+- **Macro**: FRED series timestamp-aligned for comparability  
+- **Text**: News headlines cleaned → polarity + aggregate sentiment index  
+- **Shared schema** enforces consistent inputs across agents (less glue code later)  
+Key insight: early standardization simplified downstream reliability substantially. :contentReference[oaicite:9]{index=9}
 
-1. Clone the repo
-2. Add your API keys in a `.env` file or use Colab secrets
-3. Run each agent step by step or orchestrate as a pipeline
-4. Streamlit app coming soon
+---
+
+## Evaluation & example output
+**Backtest (AAPL, 30-day horizon):** Prophet MAE 2.1 / RMSE 2.8; Fallback MAE 3.4 / RMSE 4.7; **Ensemble** MAE 2.0 / RMSE 2.6. :contentReference[oaicite:10]{index=10}
+
+**One sample run (AAPL):** ensemble forecast ~$238.78 (+3.6%), confidence ~81.9%, with strategist = **HOLD (low risk, long horizon)** after weighing bullish technicals vs neutral/bearish macro-sentiment context. :contentReference[oaicite:11]{index=11} :contentReference[oaicite:12]{index=12}
+
+**Planner example:** 10-yr target projection with contribution plan + Monte Carlo success probability; also reports plan Sharpe and expected volatility. :contentReference[oaicite:13]{index=13}
+
+**Lessons learned:** ensemble > single model; LLM reasoning improves interpretability; fallbacks + prompt design were key for resilience. :contentReference[oaicite:14]{index=14}
+
+---
+
+## What I built personally (skills a team could reuse)
+- **Agent orchestration & shared state** (async, modular boundaries) :contentReference[oaicite:15]{index=15}  
+- **Forecasting ensemble** (Prophet + ARIMA-style fallback w/ volatility-aware confidence) :contentReference[oaicite:16]{index=16}  
+- **LLM strategist w/ rule fallback** (structured outputs; explainability) :contentReference[oaicite:17]{index=17}  
+- **Goal-based planner** (FV math + Monte Carlo) :contentReference[oaicite:18]{index=18}  
+- **Data plumbing** across Yahoo/FRED/News + early standardization for reliability :contentReference[oaicite:19]{index=19}
+
