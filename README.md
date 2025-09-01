@@ -26,15 +26,12 @@ Retail tools feel like black boxes—generic templates, unclear logic, and fragm
 - **Financial Planner** -> monthly contributions, projected FV, Monte Carlo success  
 All agents read/write a common **Agent State** for modularity and traceability.
 
-**Example strategist schema**: action, confidence, position size, risk level, horizon, reasoning. 
-
 
 ## Data & preprocessing
-- **Markets**: Yahoo Finance OHLCV aligned to daily; missing values handled  
-- **Macro**: FRED series timestamp-aligned for comparability  
-- **Text**: News headlines cleaned → polarity + aggregate sentiment index  
-- **Shared schema** enforces consistent inputs across agents (less glue code later)  
-Key insight: early standardization simplified downstream reliability substantially. 
+- **Markets**: Yahoo Finance OHLCV aligned to daily, handles missing values.
+- **Macro**: FRED series aligned for comparability.
+- **Text**: News headlines cleaned and polarity plus aggregate sentiment index.
+- **Shared schema** enforces consistent inputs across agents.
 
 
 ## Evaluation & example output
