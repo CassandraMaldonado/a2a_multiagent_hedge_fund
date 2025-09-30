@@ -13,7 +13,7 @@ I built this project in the UChicago MS-ADS program to explore how agentic workf
 
 
 ## Why this matters
-Retail tools feel like black boxes—generic templates, unclear logic, and fragmented data. I wanted a system that **personalizes**, **justifies** its calls (buy/sell/hold & planning), and stays **robust** when APIs/LLMs aren’t available.
+Retail tools feel like black boxes—generic templates, unclear logic, and fragmented data. I wanted a system that **personalizes**, **justifies** its calls (buy/sell/hold & planning), and stays robust when APIs/LLMs aren’t available.
 
 
 ## Architecture
