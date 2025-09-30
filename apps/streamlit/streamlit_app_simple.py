@@ -64,7 +64,7 @@ try:
     import yfinance as yf
     st.success("✅ YFinance available")
 except Exception as e:
-    st.warning(f"⚠️ YFinance not available: {e}")
+    st.warning(f"YFinance not available: {e}")
 
 # Test final_vCM import
 st.markdown("### AI Pipeline Import Test")
