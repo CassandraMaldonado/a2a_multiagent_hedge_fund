@@ -31,13 +31,13 @@ try:
     from datetime import datetime
     st.success("✔ Datetime imported successfully")
 except Exception as e:
-    st.error(f"❌ Datetime failed: {e}")
+    st.error(f"Datetime failed: {e}")
 
 try:
     import json
-    st.success("✅ JSON imported successfully")
+    st.success("✔ JSON imported successfully")
 except Exception as e:
-    st.error(f"❌ JSON failed: {e}")
+    st.error(f"JSON failed: {e}")
 
 # Test optional imports
 st.markdown("### Optional Dependencies")
