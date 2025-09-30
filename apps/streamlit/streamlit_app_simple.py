@@ -58,7 +58,7 @@ try:
     import plotly.graph_objects as go
     st.success("✔ Plotly available")
 except Exception as e:
-    st.warning(f"⚠️ Plotly not available: {e}")
+    st.warning(f"Plotly not available: {e}")
 
 try:
     import yfinance as yf
