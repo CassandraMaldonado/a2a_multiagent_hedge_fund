@@ -8,7 +8,7 @@ I built this project in the UChicago MS-ADS program to explore how agentic workf
 - **7 agents with shared state**: Market, Sentiment, Macro, Forecasting (Prophet + ARIMA-style fallback), Risk, Strategist (GPT or rules), and a Financial Planner. 
 - **Ensemble forecasting** with volatility-aware confidence; robust to missing optional deps (graceful fallbacks). 
 - **Personal planning**: contributions, projected growth, and Monte Carlo success probability. 
-- **Results (AAPL, 30-day backtest)**: Prophet MAE **2.1** / RMSE **2.8**; Fallback MAE **3.4** / RMSE **4.7**; **Ensemble** MAE **2.0** / RMSE **2.6**. 
+- **Results (AAPL, 30-day backtest)**: Prophet MAE **2.1** / RMSE **2.8**; Fallback MAE **3.4** / RMSE **4.7**; Ensemble MAE **2.0** / RMSE **2.6**. 
 - **Live app demo** (Streamlit): https://a2amultiagenthedgefund-7jxenesgsrcamwahzhhbuf.streamlit.app
 
 
