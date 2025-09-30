@@ -44,13 +44,13 @@ st.markdown("### Optional Dependencies")
 
 try:
     import asyncio
-    st.success("✅ Asyncio available")
+    st.success("✔ Asyncio available")
 except Exception as e:
-    st.warning(f"⚠️ Asyncio issue: {e}")
+    st.warning(f"Asyncio issue: {e}")
 
 try:
     import nest_asyncio
-    st.success("✅ Nest-asyncio available")
+    st.success("✔ Nest-asyncio available")
 except Exception as e:
     st.warning(f"⚠️ Nest-asyncio not available: {e}")
 
