@@ -1,8 +1,3 @@
-"""
-Minimal Streamlit App - Debug Version
-This will help us identify what's causing the blank page
-"""
-
 import streamlit as st
 
 # Configure page first - this should always work
