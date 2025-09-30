@@ -52,11 +52,11 @@ try:
     import nest_asyncio
     st.success("✔ Nest-asyncio available")
 except Exception as e:
-    st.warning(f"⚠️ Nest-asyncio not available: {e}")
+    st.warning(f"Nest-asyncio not available: {e}")
 
 try:
     import plotly.graph_objects as go
-    st.success("✅ Plotly available")
+    st.success("✔ Plotly available")
 except Exception as e:
     st.warning(f"⚠️ Plotly not available: {e}")
 
