@@ -9,7 +9,7 @@ st.set_page_config(
 
 # Show basic content immediately
 st.title("🤖 AI Financial Forecasting System")
-st.write("✅ Streamlit is working!")
+st.write("✔ Streamlit is working!")
 
 # Now try imports one by one and show status
 st.markdown("## 🔍 System Diagnostic")
@@ -17,19 +17,19 @@ st.markdown("## 🔍 System Diagnostic")
 # Test basic imports
 try:
     import pandas as pd
-    st.success("✅ Pandas imported successfully")
+    st.success("✔ Pandas imported successfully")
 except Exception as e:
-    st.error(f"❌ Pandas failed: {e}")
+    st.error(f"Pandas failed: {e}")
 
 try:
     import numpy as np
-    st.success("✅ NumPy imported successfully")
+    st.success("✔ NumPy imported successfully")
 except Exception as e:
-    st.error(f"❌ NumPy failed: {e}")
+    st.error(f"NumPy failed: {e}")
 
 try:
     from datetime import datetime
-    st.success("✅ Datetime imported successfully")
+    st.success("✔ Datetime imported successfully")
 except Exception as e:
     st.error(f"❌ Datetime failed: {e}")
 
