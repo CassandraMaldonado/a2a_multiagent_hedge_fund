@@ -88,10 +88,10 @@ try:
     if hasattr(final_vCM, 'run_complete_analysis'):
         st.success("✔ run_complete_analysis function found")
     else:
-        st.error("❌ run_complete_analysis function not found")
+        st.error("run_complete_analysis function not found")
         
 except ImportError as e:
-    st.error(f"❌ Cannot import final_vCM.py: {e}")
+    st.error(f"Cannot import final_vCM.py: {e}")
     st.code(str(e))
 except SyntaxError as e:
     st.error(f"❌ Syntax error in final_vCM.py: {e}")
