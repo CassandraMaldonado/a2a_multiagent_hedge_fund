@@ -12,7 +12,7 @@ st.title("🤖 AI Financial Forecasting System")
 st.write("✔ Streamlit is working!")
 
 # Now try imports one by one and show status
-st.markdown("## 🔍 System Diagnostic")
+st.markdown("## System Diagnostic")
 
 # Test basic imports
 try:
