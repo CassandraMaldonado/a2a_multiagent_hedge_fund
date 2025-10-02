@@ -109,7 +109,7 @@ st.write(f"**Streamlit Version:** {st.__version__}")
 # Simple test functionality
 st.markdown("### Basic Functionality Test")
 
-if st.button("🧪 Test Basic Function"):
+if st.button("Test Basic Function"):
     st.success("✔ Button clicks work!")
     st.balloons()
 
