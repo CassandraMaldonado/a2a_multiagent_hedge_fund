@@ -81,12 +81,12 @@ try:
         st.error("MarketDataAgent class not found")
         
     if hasattr(final_vCM, 'FinancialGoal'):
-        st.success("✅ FinancialGoal class found")
+        st.success("✔ FinancialGoal class found")
     else:
-        st.error("❌ FinancialGoal class not found")
+        st.error("FinancialGoal class not found")
         
     if hasattr(final_vCM, 'run_complete_analysis'):
-        st.success("✅ run_complete_analysis function found")
+        st.success("✔ run_complete_analysis function found")
     else:
         st.error("❌ run_complete_analysis function not found")
         
