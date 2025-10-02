@@ -131,5 +131,5 @@ with st.expander("🔧 Debug Information"):
     st.write("If you see this page, Streamlit itself is working.")
     st.write("Check the import results above to see what's failing.")
     
-    if st.button("🔄 Refresh Page"):
+    if st.button("Refresh Page"):
         st.experimental_rerun()
