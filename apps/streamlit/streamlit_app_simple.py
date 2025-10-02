@@ -62,7 +62,7 @@ except Exception as e:
 
 try:
     import yfinance as yf
-    st.success("✅ YFinance available")
+    st.success("✔ YFinance available")
 except Exception as e:
     st.warning(f"YFinance not available: {e}")
 
@@ -72,13 +72,13 @@ st.markdown("### AI Pipeline Import Test")
 try:
     # Try to import the pipeline file
     import final_vCM
-    st.success("✅ final_vCM.py imported successfully!")
+    st.success("✔ final_vCM.py imported.")
     
     # Test if key classes are available
     if hasattr(final_vCM, 'MarketDataAgent'):
-        st.success("✅ MarketDataAgent class found")
+        st.success("✔ MarketDataAgent class found")
     else:
-        st.error("❌ MarketDataAgent class not found")
+        st.error("MarketDataAgent class not found")
         
     if hasattr(final_vCM, 'FinancialGoal'):
         st.success("✅ FinancialGoal class found")
