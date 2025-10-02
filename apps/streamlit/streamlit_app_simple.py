@@ -110,7 +110,7 @@ st.write(f"**Streamlit Version:** {st.__version__}")
 st.markdown("### Basic Functionality Test")
 
 if st.button("🧪 Test Basic Function"):
-    st.success("✅ Button clicks work!")
+    st.success("✔ Button clicks work!")
     st.balloons()
 
 # File listing
@@ -121,7 +121,7 @@ try:
     st.write("**Files in current directory:**")
     for file in files:
         if file.endswith('.py'):
-            st.write(f"📄 {file}")
+            st.write(f" {file}")
 except Exception as e:
     st.error(f"Cannot list files: {e}")
 
