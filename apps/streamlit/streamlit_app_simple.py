@@ -97,7 +97,7 @@ except SyntaxError as e:
     st.error(f"❌ Syntax error in final_vCM.py: {e}")
     st.code(f"Line {e.lineno}: {e.text}")
 except Exception as e:
-    st.error(f"❌ Unexpected error importing final_vCM.py: {e}")
+    st.error(f"Unexpected error importing final_vCM.py: {e}")
     st.code(str(e))
 
 # Show environment info
