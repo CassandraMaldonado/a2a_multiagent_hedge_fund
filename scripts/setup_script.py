@@ -55,7 +55,7 @@ def install_requirements():
             missing_packages.append(package)
     
     if missing_packages:
-        print(f"\n📦 Installing {len(missing_packages)} missing packages...")
+        print(f"\nInstalling {len(missing_packages)} missing packages.")
         
         for package in missing_packages:
             print(f"Installing {package}...")
