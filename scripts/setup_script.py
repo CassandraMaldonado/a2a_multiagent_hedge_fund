@@ -13,7 +13,6 @@ def check_python_version():
     return True
 
 def install_package(package):
-    """Install a single package"""
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", package])
         return True
