@@ -30,7 +30,6 @@ def check_package(package_name, import_name=None):
         return False
 
 def install_requirements():
-    """Install required packages"""
     
     # Essential packages
     essential_packages = [
@@ -44,7 +43,7 @@ def install_requirements():
         ("scipy", "scipy")
     ]
     
-    print("🔍 Checking essential packages...")
+    print("Checking essential packages.")
     
     missing_packages = []
     for package, import_name in essential_packages:
