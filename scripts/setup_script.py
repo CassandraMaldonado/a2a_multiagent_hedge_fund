@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Setup script for AI Financial Forecasting Streamlit App
-Automatically installs dependencies and checks setup
-"""
-
 import subprocess
 import sys
 import os
