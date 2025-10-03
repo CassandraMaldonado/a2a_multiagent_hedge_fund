@@ -21,7 +21,6 @@ def install_package(package):
         return False
 
 def check_package(package_name, import_name=None):
-    """Check if a package is installed"""
     if import_name is None:
         import_name = package_name
     
