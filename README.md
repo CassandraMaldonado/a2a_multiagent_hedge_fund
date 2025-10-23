@@ -35,7 +35,12 @@ All agents read/write a common **Agent State** for modularity and traceability.
 
 
 ## Evaluation & example output
-**Backtest (AAPL, 30-day horizon):** Prophet MAE 2.1 / RMSE 2.8; Fallback MAE 3.4 / RMSE 4.7; **Ensemble** MAE 2.0 / RMSE 2.6. 
+**Backtest (AAPL, 30-day horizon):** 
+| Model     | MAE | RMSE |
+|-----------|-----|------|
+| Prophet   | 2.1 | 2.8  |
+| Fallback  | 3.4 | 4.7  |
+| **Ensemble** | **2.0** | **2.6** |
 
 **One sample run (AAPL):** ensemble forecast ~$238.78 (+3.6%), confidence ~81.9%, with strategist = **HOLD (low risk, long horizon)** after weighing bullish technicals vs neutral/bearish macro-sentiment context. 
 
