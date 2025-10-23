@@ -44,5 +44,5 @@ All agents read/write a common **Agent State** for modularity and traceability.
 
 **One sample run (AAPL):** ensemble forecast $238.78 (+3.6%), confidence 81.9%, with strategist = **HOLD (low risk, long horizon)** after weighing bullish technicals vs neutral/bearish macro-sentiment context. 
 
-**Planner example:** 10-yr target projection with contribution plan + Monte Carlo success probability; also reports plan Sharpe and expected volatility.
+**Planner example:** 10 year target projection with contribution plan + Monte Carlo success probability; also reports plan Sharpe and expected volatility.
 
