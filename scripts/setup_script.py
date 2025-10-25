@@ -57,9 +57,9 @@ def install_requirements():
         for package in missing_packages:
             print(f"Installing {package}...")
             if install_package(package):
-                print(f"✅ {package} installed successfully")
+                print(f"{package} installed.")
             else:
-                print(f"❌ Failed to install {package}")
+                print(f"Failed to install {package}")
                 return False
     
     print("\n All essential packages are installed.")
