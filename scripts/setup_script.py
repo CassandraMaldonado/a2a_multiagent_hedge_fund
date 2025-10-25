@@ -62,7 +62,7 @@ def install_requirements():
                 print(f"❌ Failed to install {package}")
                 return False
     
-    print("\n✅ All essential packages are installed!")
+    print("\n All essential packages are installed.")
     return True
 
 def check_files():
