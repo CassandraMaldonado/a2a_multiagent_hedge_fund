@@ -66,7 +66,6 @@ def install_requirements():
     return True
 
 def check_files():
-    """Check if required files exist"""
     required_files = [
         "Final_GENAI_V3.py",
         "streamlit_app.py"
