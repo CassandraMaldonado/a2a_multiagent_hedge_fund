@@ -77,7 +77,7 @@ def check_files():
     missing_files = []
     for file in required_files:
         if os.path.exists(file):
-            print(f"✅ {file}")
+            print(f"{file}")
         else:
             print(f"❌ {file} - Missing")
             missing_files.append(file)
