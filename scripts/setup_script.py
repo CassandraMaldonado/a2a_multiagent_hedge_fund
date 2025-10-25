@@ -48,7 +48,7 @@ def install_requirements():
         if check_package(import_name):
             print(f" {package}")
         else:
-            print(f" {package} - Missing")
+            print(f" {package} missing")
             missing_packages.append(package)
     
     if missing_packages:
