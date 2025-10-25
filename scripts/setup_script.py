@@ -30,7 +30,6 @@ def check_package(package_name, import_name=None):
 
 def install_requirements():
     
-    # Essential packages
     essential_packages = [
         ("streamlit", "streamlit"),
         ("pandas", "pandas"),
