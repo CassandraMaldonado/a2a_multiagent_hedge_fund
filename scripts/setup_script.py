@@ -4,7 +4,6 @@ import os
 import importlib.util
 
 def check_python_version():
-    """Check if Python version is compatible"""
     if sys.version_info < (3, 8):
         print("Python 3.8 or higher is required")
         print(f"Current version: {sys.version}")
