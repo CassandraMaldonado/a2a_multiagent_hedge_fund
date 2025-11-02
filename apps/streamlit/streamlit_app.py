@@ -125,9 +125,7 @@ min_confidence = st.sidebar.slider("Confianza mínima", 0.1, 1.0, 0.3, 0.05)
 min_lift = st.sidebar.slider("Lift mínimo", 0.5, 10.0, 1.0, 0.1)
 top_n_products = st.sidebar.slider("Top N productos por frecuencia", 5, 100, 20, 5)
 
-# ----------------------------------------
-# Helpers
-# ----------------------------------------
+
 def try_detect_columns(df: pd.DataFrame):
     order_col = None
     variant_col = None
