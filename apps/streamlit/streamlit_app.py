@@ -17,9 +17,6 @@ try:
 except Exception as e:
     pass
 
-# ----------------------------------------
-# Config & Theme (Aurora)
-# ----------------------------------------
 st.set_page_config(page_title="Bundles/Aurora – Panel de Canastas de Mercado", layout="wide")
 
 # --- Aurora professional theme ---
