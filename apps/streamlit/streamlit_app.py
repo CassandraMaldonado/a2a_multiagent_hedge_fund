@@ -19,7 +19,6 @@ except Exception as e:
 
 st.set_page_config(page_title="Bundles/Aurora – Panel de Canastas de Mercado", layout="wide")
 
-# --- Aurora professional theme ---
 st.markdown(
     """
     <style>
