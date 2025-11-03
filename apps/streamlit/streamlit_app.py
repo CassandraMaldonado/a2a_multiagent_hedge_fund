@@ -4,7 +4,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-# Charts: matplotlib only
 try:
     import matplotlib.pyplot as plt
 except Exception:
