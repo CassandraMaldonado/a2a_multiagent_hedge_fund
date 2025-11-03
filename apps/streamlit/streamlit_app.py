@@ -138,7 +138,6 @@ def run_pipeline(df, min_support, min_confidence, min_lift, top_n_products):
     if order_col is None or variant_col is None:
         return None, "No se pudieron detectar las columnas. Renombra las columnas de ID de orden y producto."
 
-    # Baskets
     grouped = df.groupby(order_col)[variant_col].apply(lambda s: [str(x) for x in s.dropna().tolist()]).tolist()
 
     # Transaction encoding
