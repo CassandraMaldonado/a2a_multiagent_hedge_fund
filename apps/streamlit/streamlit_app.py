@@ -148,7 +148,6 @@ def run_pipeline(df, min_support, min_confidence, min_lift, top_n_products):
     except Exception as e:
         return None, f"Falló la codificación de transacciones: {e}"
 
-    # Apriori and rules
     try:
         frequent_itemsets = apriori(df_encoded, min_support=min_support, use_colnames=True)
         if frequent_itemsets.empty:
