@@ -140,7 +140,7 @@ def run_pipeline(df, min_support, min_confidence, min_lift, top_n_products):
 
     grouped = df.groupby(order_col)[variant_col].apply(lambda s: [str(x) for x in s.dropna().tolist()]).tolist()
 
-    # Transaction encoding
+
     try:
         te = TransactionEncoder()
         te_ary = te.fit_transform(grouped)
