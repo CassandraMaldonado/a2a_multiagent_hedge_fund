@@ -98,9 +98,7 @@ if os.path.exists(_banner_path):
     st.image(_banner_path, use_column_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ----------------------------------------
-# Sidebar controls
-# ----------------------------------------
+
 st.sidebar.header("Carga y Configuración")
 uploaded = st.sidebar.file_uploader("Sube un CSV de transacciones", type=["csv"])
 example_schema = st.sidebar.checkbox("Mostrar esquema esperado / consejos", value=False)
