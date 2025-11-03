@@ -470,7 +470,6 @@ if uploaded is not None:
                     ax10_2.set_ylabel("Porcentaje acumulado")
                     st.pyplot(fig10)
 
-            # Descargas
             with tab_descargas:
                 st.subheader("Exportar resultados")
                 def df_to_csv_bytes(df_):
