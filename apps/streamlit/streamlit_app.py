@@ -9,7 +9,6 @@ try:
 except Exception:
     plt = None
 
-# mlxtend for Apriori
 try:
     from mlxtend.frequent_patterns import apriori, association_rules
     from mlxtend.preprocessing import TransactionEncoder
