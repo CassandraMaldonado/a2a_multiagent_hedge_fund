@@ -211,9 +211,7 @@ def _spanish_itemsets(df_itemsets):
     rest = [c for c in out.columns if c not in keep and c not in ["itemsets","support"]]
     return out[keep + rest]
 
-# ----------------------------------------
-# Main
-# ----------------------------------------
+
 if uploaded is not None:
     try:
         df = pd.read_csv(uploaded)
