@@ -472,4 +472,4 @@ if uploaded is not None:
                 st.download_button("reglas_asociacion.csv", data=df_to_csv_bytes(outputs["rules"]), file_name="reglas_asociacion.csv")
                 st.download_button("frecuencia_productos.csv", data=df_to_csv_bytes(outputs["product_frequency"]), file_name="frecuencia_productos.csv")
 else:
-    st.info("Sube un CSV para comenzar. Si quieres que fije el conjunto de datos/visuales de tu notebook, comparte el CSV de muestra (p.ej., Apriori_data.csv).")
+    st.info("Sube un CSV para comenzar.")
