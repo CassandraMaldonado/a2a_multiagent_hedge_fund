@@ -20,7 +20,7 @@ except Exception as e:
 
 try:
     import numpy as np
-    st.success("✔ NumPy imported successfully")
+    st.success("NumPy imported.")
 except Exception as e:
     st.error(f"NumPy failed: {e}")
 
