@@ -283,7 +283,6 @@ if uploaded is not None:
                     pairs = fi[fi["itemsets"].apply(lambda s: len(s)==2)].sort_values("support", ascending=False).head(10)
                     st.dataframe(_spanish_itemsets(pairs), use_container_width=True)
 
-            # Reglas
             with tab_reglas:
                 st.subheader("Explorar reglas")
                 rules = outputs["rules"].copy()
