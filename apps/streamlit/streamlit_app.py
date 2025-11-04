@@ -432,7 +432,7 @@ if uploaded is not None:
                         plt.colorbar(sc2, ax=ax7, label="Soporte")
                         st.pyplot(fig7)
 
-                    # 7) Basket Size Histogram & Box Plot
+                    # basket size histogram and box plot.
                     st.subheader("Distribución del tamaño de canasta")
                     sizes_b = baskets.apply(len).values
                     fig8 = plt.figure()
