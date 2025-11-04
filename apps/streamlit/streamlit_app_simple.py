@@ -2,7 +2,7 @@ import streamlit as st
 
 # Configure page first - this should always work
 st.set_page_config(
-    page_title="🤖 AI Financial Forecasting - Debug",
+    page_title="🤖 AI Financial Forecasting",
     page_icon="📈",
     layout="wide"
 )
