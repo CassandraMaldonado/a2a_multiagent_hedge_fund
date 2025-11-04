@@ -158,7 +158,7 @@ def run_pipeline(df, min_support, min_confidence, min_lift, top_n_products):
     except Exception as e:
         return None, f"Falló Apriori/reglas: {e}"
 
-    # Product frequency
+    # product frequency.
     prod_freq = pd.Series([p for basket in grouped for p in basket]).value_counts().reset_index()
     prod_freq.columns = ['product', 'count']
     prod_freq['share'] = (prod_freq['count'] / prod_freq['count'].sum()).round(4)
