@@ -243,12 +243,10 @@ if uploaded is not None:
             with c3:
                 st.metric("Tamaño codificado", f"{outputs['df_encoded_shape'][0]} × {outputs['df_encoded_shape'][1]}")
 
-            # Tabs
             tab_resumen, tab_itemsets, tab_reglas, tab_visuales, tab_descargas = st.tabs(
                 ["Resumen", "Itemsets", "Reglas", "Visuales", "Descargas"]
             )
 
-            # Resumen
             with tab_resumen:
                 st.subheader("Productos más frecuentes (Top 10)")
                 top10_products = outputs["product_frequency"].head(10).copy()
