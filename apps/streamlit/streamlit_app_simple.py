@@ -6,9 +6,8 @@ st.set_page_config(
     layout="wide"
 )
 
-# Show basic content immediately
 st.title("🤖 AI Financial Forecasting System")
-st.write("✔ Streamlit is working!")
+st.write("Streamlit is working.")
 
 # Now try imports one by one and show status
 st.markdown("## System Diagnostic")
