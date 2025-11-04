@@ -25,7 +25,7 @@ except Exception as e:
 
 try:
     from datetime import datetime
-    st.success("✔ Datetime imported successfully")
+    st.success("Datetime imported.")
 except Exception as e:
     st.error(f"Datetime failed: {e}")
 
