@@ -12,7 +12,6 @@ st.write("Streamlit is working.")
 # Now try imports one by one and show status
 st.markdown("## System Diagnostic")
 
-# Test basic imports
 try:
     import pandas as pd
     st.success("✔ Pandas imported successfully")
