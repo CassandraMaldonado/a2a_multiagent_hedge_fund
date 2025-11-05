@@ -102,7 +102,6 @@ import sys
 st.write(f"**Python Version:** {sys.version}")
 st.write(f"**Streamlit Version:** {st.__version__}")
 
-# Simple test functionality
 st.markdown("### Basic Functionality Test")
 
 if st.button("Test Basic Function"):
