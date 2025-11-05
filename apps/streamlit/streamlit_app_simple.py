@@ -31,7 +31,7 @@ except Exception as e:
 
 try:
     import json
-    st.success("✔ JSON imported successfully")
+    st.success("JSON imported.")
 except Exception as e:
     st.error(f"JSON failed: {e}")
 
