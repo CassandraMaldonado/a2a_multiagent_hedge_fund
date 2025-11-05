@@ -13,7 +13,7 @@ st.markdown("## System Diagnostic")
 
 try:
     import pandas as pd
-    st.success("✔ Pandas imported successfully")
+    st.success("Pandas imported.")
 except Exception as e:
     st.error(f"Pandas failed: {e}")
 
