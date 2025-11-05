@@ -119,7 +119,7 @@ try:
 except Exception as e:
     st.error(f"Cannot list files: {e}")
 
-# Debug info
+
 with st.expander("🔧 Debug Information"):
     st.write("This minimal app helps identify what's causing issues.")
     st.write("If you see this page, Streamlit itself is working.")
