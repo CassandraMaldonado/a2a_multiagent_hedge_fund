@@ -109,7 +109,6 @@ if st.button("Test Basic Function"):
     st.success("✔ Button clicks work!")
     st.balloons()
 
-# File listing
 st.markdown("### File Directory")
 try:
     import os
