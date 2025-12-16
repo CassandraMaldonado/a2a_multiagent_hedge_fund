@@ -17,8 +17,8 @@ Retail tools feel like black boxes—generic templates, unclear logic, and fragm
 
 
 ## Architecture
-- **Market Data** -> OHLCV, returns, RSI, volatility, support/resistance  
-- **Sentiment** -> News headline polarity + volume (heuristic fallback)  
+- **Market Data**: OHLCV, returns, RSI, volatility, support/resistance.  
+- **Sentiment**: News headline polarity + volume (heuristic fallback)  
 - **Macro Econ** -> FRED indicators (GDP, CPI, unemployment, yield curve, VIX)  
 - **Forecasting** -> Prophet + ARIMA fallback -> ensemble w/ volatility-weighted confidence  
 - **Risk** -> down-weights forecast confidence under high volatility  
