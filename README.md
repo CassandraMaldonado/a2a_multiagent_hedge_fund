@@ -29,10 +29,20 @@ This project explores how **agentic workflows**, time-series models and LLM reas
 
 ---
 
+## System Architecture
 
+The system is a multi-agent pipeline built around a **shared Agent State**. Each agent reads what it needs, writes its outputs, and passes control to the next stage.
+
+### High-Level Data & Agent Flow
 
 ## Why this matters
 Retail tools feel like black boxes—generic templates, unclear logic, and fragmented data. I wanted a system that **personalizes**, **justifies** its calls (buy/sell/hold & planning), and stays robust when APIs/LLMs aren’t available.
+
+
+
+
+
+
 
 
 ## Architecture
