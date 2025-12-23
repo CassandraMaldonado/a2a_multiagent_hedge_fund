@@ -18,9 +18,9 @@ This project explores how **agentic workflows**, time-series models and LLM reas
   - Financial Planner
 - **Ensemble forecasting** with volatility-aware confidence and graceful fallbacks when optional dependencies are missing.
 - **Personal financial planning**:
-  - Monthly contributions
-  - Projected portfolio growth
-  - Monte Carlo–based success probability for reaching targets
+  - Monthly contributions.
+  - Projected portfolio growth.
+  - Monte Carlo–based success probability for reaching targets.
 - **Explainability**:
   - Human-readable rationales behind buy/sell/hold decisions
   - Transparent description of planning assumptions
