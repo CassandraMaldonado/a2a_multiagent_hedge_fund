@@ -6,12 +6,29 @@ This project explores how **agentic workflows**, time-series models and LLM reas
 
 ---
 
-## 
-- **7 agents with shared state**: Market, Sentiment, Macro, Forecasting (Prophet + ARIMA fallback), Risk, Strategist (GPT or rules) and a Financial Planner. 
-- **Ensemble forecasting** with volatility-aware confidence; robust to missing optional deps (graceful fallbacks). 
-- **Personal planning**: contributions, projected growth, and Monte Carlo success probability. 
-- **Results (AAPL, 30-day backtest)**: Prophet MAE **2.1** / RMSE **2.8**, Fallback MAE **3.4** / RMSE **4.7**; Ensemble MAE **2.0** / RMSE **2.6**. 
-- **Live app demo** (Streamlit): https://a2amultiagenthedgefund-7jxenesgsrcamwahzhhbuf.streamlit.app 
+## Key Features
+
+- **7 coordinated agents with shared state**
+  - Market
+  - Sentiment
+  - Macro
+  - Forecasting (Prophet + ARIMA fallback)
+  - Risk
+  - Strategist (LLM or rules)
+  - Financial Planner
+- **Ensemble forecasting** with volatility-aware confidence and graceful fallbacks when optional dependencies (e.g., Prophet) are missing.
+- **Personal financial planning**:
+  - Monthly contributions
+  - Projected portfolio growth
+  - Monte Carlo–based success probability for reaching targets
+- **Explainability**:
+  - Human-readable rationales behind buy/sell/hold decisions
+  - Transparent description of planning assumptions
+- **Live demo app** (Streamlit):  
+  `https://a2amultiagenthedgefund-7jxenesgsrcamwahzhhbuf.streamlit.app`
+
+---
+
 
 
 ## Why this matters
