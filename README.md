@@ -35,8 +35,48 @@ The system is a multi-agent pipeline built around a **shared Agent State**. Each
 
 ### High-Level Data & Agent Flow
 
-## Why this matters
-Retail tools feel like black boxes—generic templates, unclear logic, and fragmented data. I wanted a system that **personalizes**, **justifies** its calls (buy/sell/hold & planning), and stays robust when APIs/LLMs aren’t available.
+```mermaid
+flowchart LR
+  subgraph Data_Sources
+    YF[Yahoo Finance\n(OHLCV)]
+    FRED[FRED\nMacro Indicators]
+    NEWS[News APIs\nHeadlines]
+  end
+
+  subgraph Analysis_Agents
+    MKT[Market Agent]
+    SENT[Sentiment Agent]
+    MACRO[Macro Agent]
+    FCST[Forecasting Agent\n(Prophet + ARIMA)]
+    RISK[Risk Agent]
+    STRAT[Strategist Agent\n(LLM / Rules)]
+    PLAN[Financial Planner]
+  end
+
+  subgraph Shared_State
+    STATE[Agent State\n(central store)]
+  end
+
+  YF --> MKT
+  FRED --> MACRO
+  NEWS --> SENT
+
+  MKT --> STATE
+  MACRO --> STATE
+  SENT --> STATE
+
+  STATE --> FCST
+  FCST --> STATE
+
+  STATE --> RISK
+  RISK --> STATE
+
+  STATE --> STRAT
+  STRAT --> STATE
+
+  STATE --> PLAN
+  PLAN --> STATE
+
 
 
 
