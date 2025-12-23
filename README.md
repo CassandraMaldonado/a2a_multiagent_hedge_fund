@@ -22,8 +22,8 @@ This project explores how **agentic workflows**, time-series models and LLM reas
   - Projected portfolio growth.
   - Monte Carlo–based success probability for reaching targets.
 - **Explainability**:
-  - Human-readable rationales behind buy/sell/hold decisions
-  - Transparent description of planning assumptions
+  - Human-readable rationales behind buy/sell/hold decisions.
+  - Transparent description of planning assumptions.
 - **Live demo app** (Streamlit):  
   `https://a2amultiagenthedgefund-7jxenesgsrcamwahzhhbuf.streamlit.app`
 
