@@ -16,7 +16,7 @@ This project explores how **agentic workflows**, time-series models and LLM reas
   - Risk
   - Strategist (LLM or rules)
   - Financial Planner
-- **Ensemble forecasting** with volatility-aware confidence and graceful fallbacks when optional dependencies (e.g., Prophet) are missing.
+- **Ensemble forecasting** with volatility-aware confidence and graceful fallbacks when optional dependencies are missing.
 - **Personal financial planning**:
   - Monthly contributions
   - Projected portfolio growth
