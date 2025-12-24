@@ -114,16 +114,20 @@ Uses combined signals from market, macro, and forecasts to:
 
 ---
 
+### 6. **Strategist Agent**
+Determines the overall investment recommendation.
 
-## Architecture
-- **Market Data**: OHLCV, returns, RSI, volatility, support/resistance.  
-- **Sentiment**: News headline polarity + volume (heuristic fallback).
-- **Macro Econ**: FRED indicators (GDP, CPI, unemployment, yield curve, VIX).
-- **Forecasting**: Prophet + ARIMA fallback -> ensemble w/ volatility-weighted confidence.
-- **Risk**: down-weights forecast confidence under high volatility.  
-- **Strategist**: GPT-4 when key present; otherwise transparent rule-based schema.  
-- **Financial Planner** -> monthly contributions, projected FV, Monte Carlo success.  
-All agents read/write a common **Agent State** for modularity and traceability.
+Modes:
+
+- **LLM mode** (GPT-4) if an LLM key is available.
+- **Rule-based fallback** when LLM reasoning is disabled
+
+Outputs:
+
+- Buy / Sell / Hold recommendation  
+- Clear natural-language rationale grounded in shared state
+
+---
 
 ## Data & preprocessing
 - **Markets**: Yahoo Finance OHLCV aligned to daily, handles missing values.
