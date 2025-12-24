@@ -63,9 +63,16 @@ flowchart TD
     STATE --> STRAT --> STATE
     STATE --> PLAN --> STATE
 
+## Agents
 
+### 1. **Market Agent**
+Pulls OHLCV data from Yahoo Finance and computes:
 
+- Daily returns  
+- Volatility measures  
+- Basic technical indicators (RSI, simple support/resistance levels)
 
+---
 
 
 
