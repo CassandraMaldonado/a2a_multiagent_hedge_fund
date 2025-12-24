@@ -109,8 +109,8 @@ The agent then:
 Uses combined signals from market, macro, and forecasts to:
 
 - Penalize forecasts during high-volatility regimes.
-- Estimate downside risk  
-- Produce a risk-adjusted confidence score
+- Estimate downside risk.
+- Produce a risk-adjusted confidence score.
 
 ---
 
