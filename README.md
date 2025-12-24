@@ -132,10 +132,10 @@ Outputs:
 ### 7. **Financial Planner Agent**
 Provides long-term planning insights:
 
-- Monthly contribution planning over a target horizon  
-- Projected future portfolio value  
-- Monte Carlo success probability  
-- “Plan Sharpe” summary (risk-adjusted quality measure)
+- Monthly contribution planning over a target horizon.  
+- Projected future portfolio value.
+- Monte Carlo success probability.  
+- “Plan Sharpe” summary (risk-adjusted quality measure).
 
 ---
 
