@@ -92,6 +92,19 @@ Builds a macroeconomic context layer using FRED data:
 
 ---
 
+### 4. **Forecasting Agent**
+Runs an ensemble of forecasting models:
+
+- **Prophet**
+- **ARIMA:** fallback when Prophet or certain inputs are missing.
+
+The agent then:
+
+- Combines forecasts into an ensemble prediction  
+- Adjusts confidence based on volatility
+
+---
+
 
 ## Architecture
 - **Market Data**: OHLCV, returns, RSI, volatility, support/resistance.  
