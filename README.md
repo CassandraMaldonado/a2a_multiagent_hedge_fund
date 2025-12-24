@@ -35,47 +35,48 @@ The system is a multi-agent pipeline built around a **shared Agent State**. Each
 
 ### High-Level Data & Agent Flow
 
+### High-Level Data & Agent Flow
+
 ```mermaid
-flowchart LR
-  subgraph Data_Sources
-    YF[Yahoo Finance\n(OHLCV)]
-    FRED[FRED\nMacro Indicators]
-    NEWS[News APIs\nHeadlines]
-  end
+flowchart TD
+    %% ------------------ DATA SOURCES ------------------
+    subgraph DS[Data Sources]
+        YF[Yahoo Finance\n(OHLCV Prices)]
+        FRED[FRED\nMacro Indicators]
+        NEWS[News APIs\nHeadlines]
+    end
 
-  subgraph Analysis_Agents
-    MKT[Market Agent]
-    SENT[Sentiment Agent]
-    MACRO[Macro Agent]
-    FCST[Forecasting Agent\n(Prophet + ARIMA)]
-    RISK[Risk Agent]
-    STRAT[Strategist Agent\n(LLM / Rules)]
-    PLAN[Financial Planner]
-  end
+    %% ------------------ AGENTS ------------------
+    subgraph AG[Analysis Agents]
+        MKT[Market Agent]
+        SENT[Sentiment Agent]
+        MACRO[Macro Agent]
+        FCST[Forecasting Agent\n(Prophet + ARIMA)]
+        RISK[Risk Agent]
+        STRAT[Strategist Agent\n(LLM / Rules)]
+        PLAN[Financial Planner]
+    end
 
-  subgraph Shared_State
-    STATE[Agent State\n(central store)]
-  end
+    %% ------------------ STATE ------------------
+    subgraph ST[Shared Agent State]
+        STATE[(Central State Store)]
+    end
 
-  YF --> MKT
-  FRED --> MACRO
-  NEWS --> SENT
+    %% Data → Agents
+    YF --> MKT
+    NEWS --> SENT
+    FRED --> MACRO
 
-  MKT --> STATE
-  MACRO --> STATE
-  SENT --> STATE
+    %% Agents write to state
+    MKT --> STATE
+    SENT --> STATE
+    MACRO --> STATE
 
-  STATE --> FCST
-  FCST --> STATE
-
-  STATE --> RISK
-  RISK --> STATE
-
-  STATE --> STRAT
-  STRAT --> STATE
-
-  STATE --> PLAN
-  PLAN --> STATE
+    %% Downstream agents read/write state
+    STATE --> FCST --> STATE
+    STATE --> RISK --> STATE
+    STATE --> STRAT --> STATE
+    STATE --> PLAN --> STATE
 
 
 
