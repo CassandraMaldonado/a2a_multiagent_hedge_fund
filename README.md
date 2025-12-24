@@ -120,11 +120,11 @@ Determines the overall investment recommendation.
 Modes:
 
 - **LLM mode** (GPT-4) if an LLM key is available.
-- **Rule-based fallback** when LLM reasoning is disabled
+- **Rule-based fallback** when LLM reasoning is disabled.
 
 Outputs:
 
-- Buy / Sell / Hold recommendation  
+- Buy / Sell / Hold recommendation.
 - Clear natural-language rationale grounded in shared state
 
 ---
