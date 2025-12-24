@@ -36,6 +36,7 @@ The system is a multi-agent pipeline built around a **shared Agent State**. Each
 ### High-Level Data & Agent Flow
 
 flowchart TD
+
     YF[Yahoo Finance]
     NEWS[News APIs]
     FRED[FRED]
