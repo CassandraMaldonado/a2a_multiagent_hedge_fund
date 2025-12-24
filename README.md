@@ -105,6 +105,15 @@ The agent then:
 
 ---
 
+### 5. **Risk Agent**
+Uses combined signals from market, macro, and forecasts to:
+
+- Penalize forecasts during high-volatility regimes.
+- Estimate downside risk  
+- Produce a risk-adjusted confidence score
+
+---
+
 
 ## Architecture
 - **Market Data**: OHLCV, returns, RSI, volatility, support/resistance.  
