@@ -83,7 +83,14 @@ Processes recent news headlines and produces:
 
 ---
 
+### 3. **Macro Agent**
+Builds a macroeconomic context layer using FRED data:
 
+- GDP, CPI, unemployment.
+- Interest rates / yield curve.
+- Market stress indicators (VIX when available).
+
+---
 
 
 ## Architecture
