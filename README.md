@@ -100,8 +100,8 @@ Runs an ensemble of forecasting models:
 
 The agent then:
 
-- Combines forecasts into an ensemble prediction  
-- Adjusts confidence based on volatility
+- Combines forecasts into an ensemble prediction.
+- Adjusts confidence based on volatility.
 
 ---
 
