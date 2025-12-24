@@ -125,7 +125,7 @@ Modes:
 Outputs:
 
 - Buy / Sell / Hold recommendation.
-- Clear natural-language rationale grounded in shared state
+- Clear natural-language rationale grounded in shared state.
 
 ---
 
