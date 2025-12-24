@@ -68,13 +68,20 @@ flowchart TD
 ### 1. **Market Agent**
 Pulls OHLCV data from Yahoo Finance and computes:
 
-- Daily returns  
-- Volatility measures  
-- Basic technical indicators (RSI, simple support/resistance levels)
+- Daily returns.
+- Volatility measures.
+- Basic technical indicators (RSI, simple support/resistance levels).
 
 ---
 
+### 2. **Sentiment Agent**
+Processes recent news headlines and produces:
 
+- Headline-level polarity scores.
+- Aggregated sentiment index + headline volume.
+- Heuristic fallback when sentiment APIs are unavailable.
+
+---
 
 
 
