@@ -129,6 +129,16 @@ Outputs:
 
 ---
 
+### 7. **Financial Planner Agent**
+Provides long-term planning insights:
+
+- Monthly contribution planning over a target horizon  
+- Projected future portfolio value  
+- Monte Carlo success probability  
+- “Plan Sharpe” summary (risk-adjusted quality measure)
+
+---
+
 ## Data & preprocessing
 - **Markets**: Yahoo Finance OHLCV aligned to daily, handles missing values.
 - **Macro**: FRED series aligned for comparability.
