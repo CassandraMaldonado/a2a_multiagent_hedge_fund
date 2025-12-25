@@ -143,9 +143,9 @@ Provides long-term planning insights:
 ## Data & Preprocessing
 
 ### **Market Data (Yahoo Finance)**  
-- Daily OHLCV pulled and aligned to a standardized trading calendar  
-- Handling of missing days, NaNs, and irregularities  
-- Computation of returns, volatility metrics, and technical indicators  
+- Daily OHLCV pulled and aligned to a standardized trading calendar.
+- Handling of missing days, NaNs and irregularities.
+- Computation of returns, volatility metrics and technical indicators.
 
 ### **Macro Data (FRED)**  
 - Pulls selected macro series such as GDP, CPI, unemployment, interest rates  
