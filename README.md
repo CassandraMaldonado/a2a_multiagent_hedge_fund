@@ -140,19 +140,4 @@ Provides long-term planning insights:
 
 ---
 
-## Data & preprocessing
-- **Markets**: Yahoo Finance OHLCV aligned to daily, handles missing values.
-- **Macro**: FRED series aligned for comparability.
-- **Text**: News headlines cleaned and polarity plus aggregate sentiment index.
-- **Shared schema** enforces consistent inputs across agents.
-
-
-## Evaluation & example output
-**Backtest (AAPL, 30-day horizon):** 
-| Model     | MAE | RMSE |
-|-----------|-----|------|
-| Prophet   | 2.1 | 2.8  |
-| Fallback  | 3.4 | 4.7  |
-| **Ensemble** | **2.0** | **2.6** |
-
 
