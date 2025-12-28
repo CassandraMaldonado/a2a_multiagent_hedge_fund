@@ -162,7 +162,7 @@ Provides long-term planning insights:
 
 A unified **Agent State** object that:
 
-- Stores all intermediate and final outputs  
+- Stores all intermediate and final outputs.
 - Ensures agents read/write consistently typed values  
 - Serves as the communication backbone across all agents  
 
