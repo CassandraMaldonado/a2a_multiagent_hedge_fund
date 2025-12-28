@@ -152,9 +152,9 @@ Provides long-term planning insights:
 - Normalizes and aligns update frequency to market data timestamps  
 
 ### **Text Data (News)**  
-- Cleans and normalizes headlines  
-- Applies sentiment polarity scoring  
-- Produces ticker-level aggregated sentiment weighted by headline volume  
+- Cleans and normalizes headlines. 
+- Applies sentiment polarity scoring.
+- Produces ticker-level aggregated sentiment weighted by headline volume.
 
 ---
 
