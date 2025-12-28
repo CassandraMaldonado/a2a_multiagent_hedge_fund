@@ -149,7 +149,7 @@ Provides long-term planning insights:
 
 ### **Macro Data (FRED)**  
 - Pulls selected macro series such as GDP, CPI, unemployment, interest rates. 
-- Normalizes and aligns update frequency to market data timestamps  
+- Normalizes and aligns update frequency to market data timestamps.
 
 ### **Text Data (News)**  
 - Cleans and normalizes headlines. 
