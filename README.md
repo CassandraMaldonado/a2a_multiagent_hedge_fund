@@ -69,3 +69,81 @@ flowchart TD
     STATE --> RISK --> STATE
     STATE --> STRAT --> STATE
     STATE --> PLAN --> STATE
+
+
+```markdown
+## Agents
+
+### 1. **Market Agent**
+Pulls OHLCV data from Yahoo Finance and computes:
+
+- Daily returns.
+- Volatility measures.
+- Basic technical indicators (RSI, simple support/resistance levels).
+
+---
+
+### 2. **Sentiment Agent**
+Processes recent news headlines and produces:
+
+- Headline-level polarity scores.
+- Aggregated sentiment index + headline volume.
+- Heuristic fallback when sentiment APIs are unavailable.
+
+---
+
+### 3. **Macro Agent**
+Builds a macroeconomic context layer using FRED data:
+
+- GDP, CPI, unemployment.
+- Interest rates / yield curve.
+- Market stress indicators (VIX when available).
+
+---
+
+### 4. **Forecasting Agent**
+Runs an ensemble of forecasting models:
+
+- **Prophet**
+- **ARIMA:** fallback when Prophet or certain inputs are missing.
+
+The agent then:
+
+- Combines forecasts into an ensemble prediction.
+- Adjusts confidence based on volatility.
+
+---
+
+### 5. **Risk Agent**
+Uses combined signals from market, macro, and forecasts to:
+
+- Penalize forecasts during high-volatility regimes.
+- Estimate downside risk.
+- Produce a risk-adjusted confidence score.
+
+---
+
+### 6. **Strategist Agent**
+Determines the overall investment recommendation.
+
+Modes:
+
+- **LLM mode** (GPT-4) if an LLM key is available.
+- **Rule-based fallback** when LLM reasoning is disabled.
+
+Outputs:
+
+- Buy / Sell / Hold recommendation.
+- Clear natural-language rationale grounded in shared state.
+
+---
+
+### 7. **Financial Planner Agent**
+Provides long-term planning insights:
+
+- Monthly contribution planning over a target horizon  
+- Projected future portfolio value  
+- Monte Carlo success probability  
+- “Plan Sharpe” summary (risk-adjusted quality measure)
+
+---
