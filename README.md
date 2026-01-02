@@ -35,20 +35,16 @@ The system is a multi-agent pipeline built around a **shared Agent State**. Each
 
 ### High-Level Data & Agent Flow
 
+### High-Level Data & Agent Flow
+
 ```mermaid
 flowchart TD
-  %% -------------------- SOURCES --------------------
-  subgraph Sources[Data Sources]
+    %% Data Sources
     YF[Yahoo Finance]
     NEWS[News APIs]
     FRED[FRED]
-  end
 
-  %% -------------------- SHARED STATE --------------------
-  STATE[(Shared Agent State)]
-
-  %% -------------------- AGENTS --------------------
-  subgraph Agents[Agents]
+    %% Agents
     MKT[Market Agent]
     SENT[Sentiment Agent]
     MACRO[Macro Agent]
@@ -56,17 +52,25 @@ flowchart TD
     RISK[Risk Agent]
     STRAT[Strategist Agent]
     PLAN[Financial Planner]
-  end
 
-  %% -------------------- FLOW --------------------
-  YF --> MKT --> STATE
-  NEWS --> SENT --> STATE
-  FRED --> MACRO --> STATE
+    %% Shared State
+    STATE[(Shared Agent State)]
 
-  STATE --> FCST --> STATE
-  STATE --> RISK --> STATE
-  STATE --> STRAT --> STATE
-  STATE --> PLAN --> STATE
+    %% Source ingestion
+    YF --> MKT
+    NEWS --> SENT
+    FRED --> MACRO
+
+    %% Write to shared state
+    MKT --> STATE
+    SENT --> STATE
+    MACRO --> STATE
+
+    %% Downstream reasoning
+    STATE --> FCST --> STATE
+    STATE --> RISK --> STATE
+    STATE --> STRAT --> STATE
+    STATE --> PLAN --> STATE
 
 ---
 
