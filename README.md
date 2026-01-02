@@ -35,34 +35,6 @@ The system is a multi-agent pipeline built around a **shared Agent State**. Each
 
 ### High-Level Data & Agent Flow
 
-flowchart TD
-
-    YF[Yahoo Finance]
-    NEWS[News APIs]
-    FRED[FRED]
-
-    MKT[Market Agent]
-    SENT[Sentiment Agent]
-    MACRO[Macro Agent]
-    FCST[Forecasting Agent]
-    RISK[Risk Agent]
-    STRAT[Strategist Agent]
-    PLAN[Financial Planner]
-
-    STATE[(Shared Agent State)]
-
-    YF --> MKT
-    NEWS --> SENT
-    FRED --> MACRO
-
-    MKT --> STATE
-    SENT --> STATE
-    MACRO --> STATE
-
-    STATE --> FCST --> STATE
-    STATE --> RISK --> STATE
-    STATE --> STRAT --> STATE
-    STATE --> PLAN --> STATE
 
 ## Agents
 
