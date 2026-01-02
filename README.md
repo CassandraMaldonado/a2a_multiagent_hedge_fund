@@ -35,8 +35,6 @@ The system is a multi-agent pipeline built around a **shared Agent State**. Each
 
 ### High-Level Data & Agent Flow
 
-### High-Level Data & Agent Flow
-
 ```mermaid
 flowchart TD
     %% Data Sources
