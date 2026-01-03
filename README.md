@@ -147,6 +147,8 @@ flowchart TD
     STATE --> PLAN --> STATE
 ```
 
+---
+
 ## Data & Preprocessing
 
 ### **Market Data (Yahoo Finance)**
