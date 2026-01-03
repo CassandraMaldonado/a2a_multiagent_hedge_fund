@@ -145,3 +145,22 @@ flowchart TD
     STATE --> RISK --> STATE
     STATE --> STRAT --> STATE
     STATE --> PLAN --> STATE
+```
+
+## Data & Preprocessing
+
+### **Market Data (Yahoo Finance)**
+- Daily OHLCV data pulled and aligned to a standardized trading calendar  
+- Handling of missing days, NaNs, and other irregularities  
+- Computation of returns, volatility metrics, and technical indicators  
+
+### **Macro Data (FRED)**
+- Pulls selected macroeconomic series such as GDP, CPI, unemployment, and interest rates  
+- Normalizes and aligns update frequency and timestamps to market data  
+
+### **Text Data (News)**
+- Cleans and normalizes news headlines  
+- Applies sentiment polarity scoring  
+- Produces ticker-level aggregated sentiment weighted by headline volume  
+
+---
