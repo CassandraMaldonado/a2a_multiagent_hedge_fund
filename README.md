@@ -183,8 +183,8 @@ This design enables plug-and-play modularity, where each agent operates independ
 
 This system provides:
 
-- Ensemble forecasts with adjusted confidence levels  
-- Strategy recommendations (Buy / Sell / Hold) with explanations  
+- Ensemble forecasts with adjusted confidence levels.
+- Strategy recommendations (Buy / Sell / Hold) with explanations.
 - Scenario-based financial planning outputs  
 - Backtesting metrics such as MAE and RMSE across models  
 - Monte Carlo–based long-term success probabilities  
