@@ -178,3 +178,15 @@ A unified **Agent State** object that:
 This design enables plug-and-play modularity, where each agent operates independently while remaining fully coordinated.
 
 ---
+
+## Evaluation & Example Outputs
+
+This system provides:
+
+- Ensemble forecasts with adjusted confidence levels  
+- Strategy recommendations (Buy / Sell / Hold) with explanations  
+- Scenario-based financial planning outputs  
+- Backtesting metrics such as MAE and RMSE across models  
+- Monte Carlo–based long-term success probabilities  
+
+Use the Streamlit app or pipeline scripts to view detailed examples for any ticker.
