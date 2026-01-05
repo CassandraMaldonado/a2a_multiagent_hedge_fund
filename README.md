@@ -167,8 +167,6 @@ flowchart TD
 
 ---
 
----
-
 ## Shared Schema
 
 A unified **Agent State** object that:
