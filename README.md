@@ -185,8 +185,8 @@ This system provides:
 
 - Ensemble forecasts with adjusted confidence levels.
 - Strategy recommendations (Buy / Sell / Hold) with explanations.
-- Scenario-based financial planning outputs  
-- Backtesting metrics such as MAE and RMSE across models  
+- Scenario-based financial planning outputs.
+- Backtesting metrics such as MAE and RMSE across models.
 - Monte Carlo–based long-term success probabilities  
 
 Use the Streamlit app or pipeline scripts to view detailed examples for any ticker.
