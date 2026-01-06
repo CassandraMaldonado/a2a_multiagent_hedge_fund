@@ -161,9 +161,9 @@ flowchart TD
 - Normalizes and aligns update frequency and timestamps to market data  
 
 ### **Text Data (News)**
-- Cleans and normalizes news headlines  
-- Applies sentiment polarity scoring  
-- Produces ticker-level aggregated sentiment weighted by headline volume  
+- Cleans and normalizes news headlines.
+- Applies sentiment polarity scoring.
+- Produces ticker-level aggregated sentiment weighted by headline volume.
 
 ---
 
