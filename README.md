@@ -171,9 +171,9 @@ flowchart TD
 
 A unified **Agent State** object that:
 
-- Stores all intermediate and final outputs  
-- Ensures agents read from and write to consistently typed values  
-- Serves as the communication backbone across all agents  
+- Stores all intermediate and final outputs.
+- Ensures agents read from and write to consistently typed values.
+- Serves as the communication backbone across all agents.
 
 This design enables plug-and-play modularity, where each agent operates independently while remaining fully coordinated.
 
