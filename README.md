@@ -157,8 +157,8 @@ flowchart TD
 - Computation of returns, volatility metrics, and technical indicators  
 
 ### **Macro Data (FRED)**
-- Pulls selected macroeconomic series such as GDP, CPI, unemployment, and interest rates  
-- Normalizes and aligns update frequency and timestamps to market data  
+- Pulls selected macroeconomic series such as GDP, CPI, unemployment and interest rates.
+- Normalizes and aligns update frequency and timestamps to market data.
 
 ### **Text Data (News)**
 - Cleans and normalizes news headlines.
