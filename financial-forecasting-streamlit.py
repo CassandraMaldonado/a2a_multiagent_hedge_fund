@@ -72,7 +72,7 @@ try:
     NEWS_API_KEY = userdata.get('NEWS_API_KEY')
     OPENAI_API_KEY = userdata.get('OPENAI_API_KEY')
 
-    # Reddit API credentials
+    # Reddit API.
     REDDIT_CLIENT_ID = userdata.get('REDDIT_CLIENT_ID')
     REDDIT_CLIENT_SECRET = userdata.get('REDDIT_CLIENT_SECRET')
     REDDIT_USER_AGENT = userdata.get('REDDIT_USER_AGENT')
