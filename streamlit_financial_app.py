@@ -248,12 +248,12 @@ class ForecastingAgent:
             prices = market_data.prices
             current_price = market_data.current_price
             
-            # Multiple forecasting methods
+            # Multiple forecasting methods.
             arima_forecast = self._arima_forecast(prices, current_price)
             prophet_forecast = self._prophet_forecast(prices, current_price)
             lstm_forecast = self._lstm_forecast(prices, current_price)
             
-            # Ensemble forecast
+            # Ensemble forecast.
             ensemble_forecast = np.mean([arima_forecast, prophet_forecast, lstm_forecast])
             
             # Calculate confidence based on forecast agreement
