@@ -1,8 +1,3 @@
-"""
-AI FINANCIAL FORECASTING SYSTEM - PART 1
-Imports and Data Structures
-"""
-
 import streamlit as st
 import pandas as pd
 import numpy as np
