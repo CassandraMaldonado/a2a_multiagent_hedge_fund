@@ -159,12 +159,12 @@ class MarketDataAgent:
             return_20d = float(returns.tail(20).mean()) if len(returns) >= 20 else 0.0
             volatility_20d = float(returns.tail(20).std() * np.sqrt(252)) if len(returns) >= 20 else 0.0
             
-            # Technical indicators
+            # Technical indicators.
             rsi = self._calculate_rsi(prices)
             trend = self._analyze_trend(prices)
             macd_signal = self._calculate_macd_signal(prices)
             
-            # Support and resistance
+            # Support and resistance.
             high_20 = prices.tail(20).max()
             low_20 = prices.tail(20).min()
             support_level = float(low_20 * 1.02)
