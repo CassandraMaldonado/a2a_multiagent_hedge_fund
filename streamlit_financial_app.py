@@ -584,7 +584,7 @@ class StrategistAgent:
                     recommendation = await self._generate_gpt_recommendation(
                         market_data, forecast_data, risk_metrics, macro_data, sentiment_data
                     )
-                    st.success("✅ GPT-4 recommendation generated")
+                    st.success("✅ GPT-4 recommendation generated.")
                     return recommendation
                 except Exception as e:
                     st.warning(f"GPT-4 failed: {e}, using rule-based analysis")
@@ -674,17 +674,17 @@ class StrategistAgent:
         }
         score += trend_scores.get(market_data.trend, 0.0) * 0.25
         
-        # RSI analysis
+        # RSI analysis.
         if market_data.rsi < 30:
             score += 0.2  # Oversold
         elif market_data.rsi > 70:
             score -= 0.2  # Overbought
         
-        # Forecast analysis
+        # Forecast analysis.
         expected_return = (forecast_data.ensemble_forecast - market_data.current_price) / market_data.current_price
         score += expected_return * forecast_data.forecast_confidence * 0.3
         
-        # Risk analysis
+        # Risk analysis.
         if risk_metrics.sharpe_ratio > 1.0:
             score += 0.15
         elif risk_metrics.sharpe_ratio < 0:
