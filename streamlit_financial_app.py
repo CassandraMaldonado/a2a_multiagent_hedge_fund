@@ -690,15 +690,15 @@ class StrategistAgent:
         elif risk_metrics.sharpe_ratio < 0:
             score -= 0.15
         
-        # Sentiment analysis
+        # Sentiment analysis.
         sentiment_scores = {"positive": 0.1, "neutral": 0.0, "negative": -0.1}
         score += sentiment_scores.get(sentiment_data.sentiment_trend, 0.0)
         
-        # Macro analysis
+        # Macro analysis.
         macro_scores = {"bullish": 0.1, "neutral": 0.0, "bearish": -0.1}
         score += macro_scores.get(macro_data.market_sentiment, 0.0)
         
-        # Generate recommendation based on score
+        # Generate recommendation based on score.
         if score > 0.4:
             action = "BUY"
             confidence = min(0.9, 0.6 + score * 0.4)
