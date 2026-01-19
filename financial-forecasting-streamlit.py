@@ -252,7 +252,7 @@ class FinancialPlanResult:
 
     last_updated: datetime = field(default_factory=datetime.now)
 
-# Market data agent
+# Market data agent.
 class MarketDataAgent:
 
     def __init__(self):
