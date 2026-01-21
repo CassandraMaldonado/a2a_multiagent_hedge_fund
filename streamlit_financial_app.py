@@ -374,7 +374,7 @@ class RiskAgent:
             st.error(f"Error in risk calculation: {e}")
             return RiskMetrics()
 
-# Macro Economic Agent
+# Macro economic agent.
 class MacroEconomicAgent:
     def __init__(self, fred_api_key=None):
         self.name = "MacroEconomicAgent"
