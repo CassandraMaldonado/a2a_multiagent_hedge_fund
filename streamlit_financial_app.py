@@ -236,7 +236,7 @@ class MarketDataAgent:
             return "bearish"
         else:
             return "neutral"
-# Forecasting Agent
+# Forecasting agent.
 class ForecastingAgent:
     def __init__(self):
         self.name = "ForecastingAgent"
