@@ -830,14 +830,14 @@ class FinancialPlannerAgent:
         else:
             fv_contributions = goal.monthly_contribution * months
         
-        # Total projected value
+        # Total projected value.
         projected_value = fv_current + fv_contributions
         
-        # Success analysis
+        # Success analysis.
         success_probability = min(1.0, projected_value / goal.target_amount)
         gap = goal.target_amount - projected_value
         
-        # Required additional monthly contribution
+        # Required additional monthly contribution.
         if gap > 0 and monthly_rate > 0:
             required_monthly = gap / (((1 + monthly_rate) ** months - 1) / monthly_rate)
         else:
